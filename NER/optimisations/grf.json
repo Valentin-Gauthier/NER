@@ -1,0 +1,212 @@
+[
+    {
+        "main_graph": "grfpersContextePersonne",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfpersAmbigus",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfgeogPlaceDico",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grftoolPolylexical",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfpersCivilitePersonne",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgPlaceGeoPolitique",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgAssemblee",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grftagOrgNameEntreprise",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfgeogRiviere",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgSuiviDeParentheses",
+        "second_graph": "",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfgeogPlaceDico",
+        "second_graph": "grftoolPolylexical",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfgeogPlaceDico",
+        "second_graph": "grforgPlaceGeoPolitique",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgGenerique",
+        "second_graph": "grfgeogHydro",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgPolice",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgTransport",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgArmee",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgGouvernement",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgSport",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgAssemblee",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfpersCivilitePersonne",
+        "second_graph": "grftagNomFamille",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfpersCivilitePersonne",
+        "second_graph": "grftagCiviliteS",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfpersCivilitePersonne",
+        "second_graph": "grftagTitreNobiliaireS",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfpersContextePersonne",
+        "second_graph": "grftagNomFamille",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfpersPrenomNom",
+        "second_graph": "grftagCiviliteS",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfplace",
+        "second_graph": "grforgPolice",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfplace",
+        "second_graph": "grfpersPrenomNom",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfplace",
+        "second_graph": "grforgProximite",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfplace",
+        "second_graph": "grforgEconomie",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grfplace",
+        "second_graph": "grfpersContextePersonne",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grftagOrgFunder",
+        "second_graph": "grforgProximite",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grftagOrgNameEntreprise",
+        "second_graph": "grfpersPrenomNom",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grftagOrgNameEntreprise",
+        "second_graph": "grfpersGenerique",
+        "third_graph": ""
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgArmee",
+        "third_graph": "grfpersPrenomNom"
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgProximite",
+        "third_graph": "grfpersPrenomNom"
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgMusique",
+        "third_graph": "grfpersPrenomNom"
+    },
+    {
+        "main_graph": "grforgSeule",
+        "second_graph": "grforgAssemblee",
+        "third_graph": "grfpersGenerique"
+    },
+    {
+        "main_graph": "grfpersCivilitePersonne",
+        "second_graph": "grftagCiviliteS",
+        "third_graph": "grftagNomFamille"
+    },
+    {
+        "main_graph": "grfpersCivilitePersonne",
+        "second_graph": "grftagTitreNobiliaireS",
+        "third_graph": "grftagNomFamilleDe"
+    },
+    {
+        "main_graph": "grfpersPrenomNom",
+        "second_graph": "grftagPrenom",
+        "third_graph": "grftagNumRegne"
+    },
+    {
+        "main_graph": "grfpersPrenomNom",
+        "second_graph": "grftagPrenom",
+        "third_graph": "grftagTitreNobiliaireS"
+    },
+    {
+        "main_graph": "grfpersPrenomNom",
+        "second_graph": "grftagCiviliteS",
+        "third_graph": "grftagParticule"
+    },
+    {
+        "main_graph": "grfplace",
+        "second_graph": "grfpersContextePersonne",
+        "third_graph": "grfpersContextePersonne"
+    }
+]
