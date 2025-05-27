@@ -28,3 +28,11 @@
 [2025-05-27 12:03:20] - Pipeline [casEN_optimisation] finish in 0.74 s.
 [2025-05-27 12:03:20] - Pipeline [casEN_priority] finish in 0.15 s.
 [2025-05-27 12:03:22] - Pipeline [apply_correction] finish in 2.68 s.
+[2025-05-27 12:06:02] - Pipeline [merge] finish in 0.40 s.
+[2025-05-27 12:06:03] - Pipeline [casEN_optimisation] finish in 0.57 s.
+[2025-05-27 12:06:03] - Pipeline [casEN_priority] finish in 0.12 s.
+[2025-05-27 12:06:05] - Pipeline [apply_correction] finish in 1.76 s.
+[2025-05-27 12:08:14] - Pipeline [merge] finish in 0.46 s.
+[2025-05-27 12:08:15] - Pipeline [casEN_optimisation] finish in 0.57 s.
+[2025-05-27 12:08:15] - Pipeline [casEN_priority] finish in 0.13 s.
+[2025-05-27 12:08:17] - Pipeline [apply_correction] finish in 1.91 s.

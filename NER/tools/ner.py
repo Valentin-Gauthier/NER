@@ -222,7 +222,11 @@ class NER:
     def save_dataframe(self, filename: str, ) -> str:
         """Save a DataFrame in an Excel file, avoiding overwrite"""
         
-        path = Path.cwd()
+        if self.NER_result_folder:
+            path = self.NER_result_folder
+        else:
+            path = Path.cwd()
+            
         if not path.exists():
             raise FileNotFoundError(f"[save] The provided folder does not exist: {path}")
         if not path.is_dir():

@@ -1,6 +1,6 @@
 # 🧠 Named Entity Recognition (NER)
 
-A natural language processing (NLP) project to detect and classify named entities (persons, locations, organizations, etc.) in French texts.
+Optimisation of a natural language processing (NLP) project to detect and classify named entities (persons, locations, organizations, etc.) in French texts. Using SpaCy and CasEN.
 
 ---
 
@@ -9,10 +9,10 @@ A natural language processing (NLP) project to detect and classify named entitie
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+git clone https://github.com/Valentin-Gauthier/NER.git
+cd NER
 ```
----
+
 ### 2. requirement
 ```bash
 pip install -r requirements.txt
@@ -20,5 +20,5 @@ pip install -r requirements.txt
 
 ## ✍️ Author
 
-Valentin — L3 Informatique  
-Stage NER 2025 – Projet universitaire  
+Valentin — Bachelor’s degree, 3rd year, Computer Science  
+Internship at LIFAT - 2025
