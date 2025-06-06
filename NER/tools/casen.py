@@ -217,6 +217,7 @@ class CasEN:
                 "third_graph":   third
             })
 
+
         return entities
 
     @chrono
@@ -230,7 +231,9 @@ class CasEN:
         for file in self.files:
             with open(file, 'r', encoding="utf-8") as f:
                 content = f.read()
+                
             content = re.sub(r'</?s\b[^>]*>', '', content)
+            content = re.sub(r"</?s>", "", content)
             soup = BeautifulSoup(content, "html.parser")
             for doc in soup.find_all("doc"):
                 doc_id = int(doc.attrs.get("id"))
