@@ -7,11 +7,49 @@ from datetime import datetime
 import json
 
 class NER:
-    def __init__(self, spaCy:SpaCy | pd.DataFrame, casEN:CasEN | pd.DataFrame, data:str, casEN_priority_merge:bool, casEN_graph_validation:str, extent_optimisation:bool, remove_duplicate_rows:bool, ner_result_folder:str,excluded_names:str , correction:str=None, logging:bool=True, log_folder:str=None, timer:bool=True, verbose:bool=False):
+    def __init__(self, 
+                 data:str, 
+                 casEN_priority_merge:bool, 
+                 casEN_graph_validation:str, 
+                 extent_optimisation:bool, 
+                 remove_duplicate_rows:bool, 
+                 ner_result_folder:str,
+                 excluded_names:str , 
+                 spaCy:SpaCy = None , 
+                 casEN:CasEN = None , 
+                 dfs:list[pd.DataFrame]=None, 
+                 make_excel_file:bool=True,
+                 correction:str=None, 
+                 logging:bool=True, 
+                 log_folder:str=None, 
+                 timer:bool=True, 
+                 verbose:bool=False):
+        
+        if dfs is None:
+            if spaCy is None or casEN is None:
+                raise ValueError("[NER init] You must provide either dfs (list of DataFrames) or both spaCy and casEN instances.")
+            elif not isinstance(spaCy.df, pd.DataFrame) or spaCy.df.empty:
+                raise ValueError("[NER init] Provided spaCy does not contain a valid DataFrame.")
+            elif not isinstance(casEN.df, pd.DataFrame) or casEN.df.empty:
+                raise ValueError("[NER init] Provided casEN does not contain a valid DataFrame.")
+            else:
+                # Extraire les df depuis les objets spaCy et casEN
+                self.dfs = [spaCy.df.copy(), casEN.df.copy()]
+        else:
+            if not all(isinstance(df, pd.DataFrame) for df in dfs):
+                raise ValueError("[NER init] dfs must be a list of pandas DataFrames.")
+            self.dfs = [df.copy() for df in dfs]
+        
         self.spaCy = spaCy
         self.casEN = casEN
         self.data = Path(data)
         self.ner_result_folder = Path(ner_result_folder)
+
+        if dfs is not None and not all(isinstance(df, pd.DataFrame) for df in dfs):
+            raise ValueError("[NER init] A list of pandas DataFrames is required")
+        
+        if all(isinstance(df, pd.DataFrame)for df in dfs):
+            self.dfs = [df.copy() for df in dfs] # we can use 'self.dfs = dfs', if dataframes take to much RAM
 
         # ------------------ NER OPTIMISATION -------------------- #
         self.casEN_priority_merge = casEN_priority_merge     
@@ -21,6 +59,7 @@ class NER:
         self.extent_optimisation = extent_optimisation
 
         # ------------------- NER OPTIONS ----------------------- #
+        self.make_excel_file = make_excel_file
         self.correction = Path(correction) if correction else None
         self.logging = logging
         self.log_folder = Path(log_folder) if log_folder else None
@@ -82,8 +121,90 @@ class NER:
         else:
             raise Exception(f"[merge] Error in the get_method while")
 
+
     @chrono
     def merge(self) -> pd.DataFrame:
+        """Merge a list of DataFrames with unique key and dynamic method names from 'method' column."""
+
+        if self.verbose:
+            for i, df in enumerate(self.dfs):
+                print(f"[merge] shape of dataframe n°{i} : {df.shape}")
+
+        # Étape 1 : préparation des DataFrames
+        prepared_dfs = []
+        for i, df in enumerate(self.dfs):
+            df = df.copy()
+            df['method'] = df.get('method', f"df{i}")
+            df['occurrence_id'] = df.groupby(["NER", "NER_label", "file_id"]).cumcount()
+            df['key'] = df[["NER", "NER_label", "file_id", "occurrence_id"]].apply(tuple, axis=1)
+            prepared_dfs.append(df)
+
+        # Étape 2 : fusion progressive
+        merged_df = prepared_dfs[0]
+
+        for i, df in enumerate(prepared_dfs[1:], start=1):
+            df = df.copy()
+            
+            merged_df.rename(columns={'method': 'method_left'}, inplace=True)
+            df.rename(columns={'method': 'method_right'}, inplace=True)
+
+            merged_df = pd.merge(
+                merged_df,
+                df,
+                on="key",
+                how="outer",
+                suffixes=("_left", "_right"),
+                indicator=True
+            )
+
+            # Étape 3 : déterminer dynamiquement la méthode combinée
+            def resolve_method(row):
+                left = row.get('method_left')
+                right = row.get('method_right')
+                if row["_merge"] == "both":
+                    if len(self.dfs) > 2:
+                        return f"{left}_{right}"
+                    return "intersection" 
+                elif row["_merge"] == "left_only":
+                    return left
+                else:
+                    return right
+
+            merged_df['method'] = merged_df.apply(resolve_method, axis=1)
+
+            # Étape 4 : fusionner les colonnes dupliquées
+            columns_to_merge = ['NER', 'NER_label', 'file_id', 'desc', 'titles',
+                                'main_graph', 'second_graph', 'third_graph']
+            for col in columns_to_merge:
+                col_left = f"{col}_left"
+                col_right = f"{col}_right"
+                if col_left in merged_df.columns and col_right in merged_df.columns:
+                    merged_df[col] = merged_df[col_left].combine_first(merged_df[col_right])
+                    merged_df.drop([col_left, col_right], axis=1, inplace=True)
+
+            # Nettoyage
+            merged_df.drop(columns=['_merge', 'method_left', 'method_right'], inplace=True, errors='ignore')
+
+        # Finalisation
+        merged_df.drop(columns=['key', 'occurrence_id'], inplace=True, errors='ignore')
+        merged_df = merged_df.sort_values(by=["file_id", "NER", "method"]).reset_index(drop=True)
+
+        # Réorganise les colonnes
+        final_columns = ["titles", "NER", "NER_label", "desc", "method",
+                        "main_graph", "second_graph", "third_graph", "file_id"]
+        merged_df = merged_df[[col for col in final_columns if col in merged_df.columns]]
+
+        if self.verbose:
+            print(f"[merge] Final merged DataFrame shape: {merged_df.shape}")
+            print("[merge] method value counts:")
+            print(merged_df['method'].value_counts())
+
+        self.df = merged_df
+
+        return self.df
+
+    @chrono
+    def merge2(self) -> pd.DataFrame:
         """ Merge spaCy & CasEN results
 
             When SpaCy & casEN found same entity -> keep on with updated method column to "intersection"
@@ -155,81 +276,6 @@ class NER:
         self.df = merge_df
         return self.df
 
-    @chrono
-    def merge2(self) -> pd.DataFrame:
-        """ Merge spaCy & CasEN result"""
-
-        if self.verbose:
-            print(f"[merge] CasEN's DataFrame : {self.casEN_df.shape}")
-            print(f"[merge] SpaCy's DataFrame : {self.spaCy_df.shape}")
-            df_not_empty = self.data_df[self.data_df["desc"] != ""]
-            print(f"[merge] Data's DataFrame {self.data_df.shape} ")
-
-    
-        self.spaCy_df["key"] = self.spaCy_df[["NER", "NER_label", "file_id"]].apply(lambda x: tuple(x), axis=1)
-        self.casEN_df["key"] = self.casEN_df[["NER", "NER_label", "file_id"]].apply(lambda x: tuple(x), axis=1)
-
-        if self.verbose:
-            # spaCy
-            spa_counts = self.spaCy_df["key"].value_counts()
-            spa_dup_keys = spa_counts[spa_counts > 1]
-            if not spa_dup_keys.empty:
-                print(f"[merge] {len(spa_dup_keys)} clés dupliquées dans spaCy avant merge (num occurrences > 1) :")
-                # éventuellement afficher les 5 premières
-                for k, cnt in spa_dup_keys.head(5).items():
-                    print(f"    Key={k}  occurs {cnt} times")
-            else:
-                print("[merge] Aucune clé dupliquée dans spaCy avant merge.")
-
-            # CasEN
-            cas_counts = self.casEN_df["key"].value_counts()
-            cas_dup_keys = cas_counts[cas_counts > 1]
-            if not cas_dup_keys.empty:
-                print(f"[merge] {len(cas_dup_keys)} clés dupliquées dans CasEN avant merge (num occurrences > 1) :")
-                for k, cnt in cas_dup_keys.head(5).items():
-                    print(f"    Key={k}  occurs {cnt} times")
-            else:
-                print("[merge] Aucune clé dupliquée dans CasEN avant merge.")
-
-
-
-        merge_df = pd.merge(self.spaCy_df, self.casEN_df, on="key", how="outer", suffixes=["_spaCy", "_casEN"], indicator=True)
-
-        # Fix shared columns
-        merge_df["titles"] = merge_df["titles_spaCy"].combine_first(merge_df["titles_casEN"])
-        merge_df["NER"] = merge_df["NER_spaCy"].combine_first(merge_df["NER_casEN"])
-        merge_df["NER_label"] = merge_df["NER_label_spaCy"].combine_first(merge_df["NER_label_casEN"])
-        merge_df["desc"] = merge_df["desc_spaCy"].combine_first(merge_df["desc_casEN"])
-        merge_df["method"] = merge_df.apply(self.get_method, axis=1) # Update for intersection
-        merge_df["file_id"] = merge_df["file_id_spaCy"].combine_first(merge_df["file_id_casEN"])
-
-        if self.remove_duplicate_rows:
-            merge_df.drop_duplicates(subset=["NER", "NER_label", "method", "main_graph", "second_graph", "third_graph", "file_id"], inplace=True)
-            if self.verbose:
-                print(f"[merge] Dropping duplicate rows")
-
-        if self.verbose:
-            post_counts = merge_df["key"].value_counts()
-            multi_merge_keys = post_counts[post_counts > 1]
-            if not multi_merge_keys.empty:
-                print(f"[merge] Après merge, {len(multi_merge_keys)} clés apparaissent plusieurs fois (ligne > 1) :")
-                for key, cnt in multi_merge_keys.head(5).items():
-                    print(f"    Key={key}  apparaît {cnt} fois dans merge_df")
-            else:
-                print("[merge] Aucune clé multiple après merge.")
-
-        merge_df = merge_df.sort_values(by=["file_id"], ascending=True).reset_index(drop=True)
-        
-        final_columns = ["titles", "NER", "NER_label", "desc","method", "main_graph", "second_graph", "third_graph", "file_id"]
-        self.df = merge_df[final_columns]
-
-        if self.verbose:
-            files_with_entities = set(merge_df["file_id"])
-            total_with_desc = len(df_not_empty)
-            desc_without_entity = total_with_desc - len(files_with_entities)
-            print(f"[merge] description without entities : {desc_without_entity}")
-
-        return self.df
 
     @chrono
     def apply_correction(self) -> pd.DataFrame:
@@ -242,7 +288,7 @@ class NER:
 
         correction_df = pd.read_excel(self.correction)
 
-        correction_df["key"] = correction_df[["NER", "NER_label", "file_id"]].apply(lambda x: tuple(x), axis=1)
+        correction_df["key"] = correction_df[["NER", "NER_label", "hash"]].apply(lambda x: tuple(x), axis=1)
         self.df["key"] = self.df[["NER", "NER_label", "file_id"]].apply(lambda x: tuple(x), axis=1)
         
         correction_df = correction_df.drop_duplicates(subset=["key"])
@@ -432,23 +478,38 @@ class NER:
 
     @chrono
     def run(self) -> str:
-        """ Run SpaCy & CasEN et merge both result with NER optimisations"""
-        self.data_df = pd.read_excel(self.data) # Load data
-        # spaCy config
-        if not isinstance(self.spaCy, pd.DataFrame):
-            self.spaCy.data_df = self.data_df
-            self.spaCy_df = self.spaCy.run()
-        else:
-            self.spaCy_df = self.spaCy
+        """Run SpaCy & CasEN or use provided DataFrames, then merge results with NER optimisations."""
+        self.data_df = pd.read_excel(self.data)  # Load input data
 
-        # casEN config
-        if not isinstance(self.casEN, pd.DataFrame):
-            self.casEN.data_df = self.data_df
-            self.casEN_df = self.casEN.run()
+       # Cas 1 : utilisation directe de dfs (plusieurs DF possibles)
+        if hasattr(self, 'dfs') and self.dfs:
+            if self.verbose:
+                print(f"[run] Using {len(self.dfs)} provided DataFrames from dfs. Skipping spaCy/casEN runs.")
+            # Rien à faire ici, dfs est déjà prêt
         else:
-            self.casEN_df = self.casEN
+            # Cas 2 : on utilise spaCy + casEN
+            print(f"[run] Using spaCy/casEN to run.")
+            self.dfs = []
 
-        # --- MERGE --- #  
+            # SpaCy
+            if not isinstance(self.spaCy, pd.DataFrame):
+                self.spaCy.data_df = self.data_df
+                spacy_df = self.spaCy.run()
+            else:
+                spacy_df = self.spaCy
+            spacy_df["method"] = "spaCy"
+            self.dfs.append(spacy_df)
+
+            # CasEN
+            if not isinstance(self.casEN, pd.DataFrame):
+                self.casEN.data_df = self.data_df
+                casen_df = self.casEN.run()
+            else:
+                casen_df = self.casEN
+            casen_df["method"] = "casEN"
+            self.dfs.append(casen_df)
+
+        # --- MERGE --- #
         self.merge()
 
         # -------- OPTIMISATIONS -------- #
@@ -460,16 +521,19 @@ class NER:
 
         if self.extent_optimisation:
             self.extent_optimisations()
-        # ----------- CORRECTION ------- #
+
+        # ----------- CORRECTION -------- #
         if self.correction is not None:
             self.apply_correction()
 
+        # --- SAVE --- #
+        if self.make_excel_file:
+            filename = "NER"
+            saved = self.save_dataframe(filename)
+            print(f"File saved at : {saved}")
 
-        # # Save 
-        filename = f"NER"
-        saved = self.save_dataframe(filename)
+        return self.df
 
-        return saved
 
 
 
