@@ -1,5 +1,6 @@
 import stanza
 import pandas as pd
+import torch
 import re
 import time
 from datetime import datetime
@@ -22,6 +23,12 @@ class Stanza:
 
         # Load the French Pipeline (tokenize : slice the text, mwt: usefull for french word like "ajourd'hui", ner : analyse the text)
         self.nlp = stanza.Pipeline(lang="fr", processors='tokenize,mwt,ner', use_gpu=self.gpu)
+
+        if self.verbose:
+            print("PyTorch version :", torch.__version__)
+            print("CUDA available :", torch.cuda.is_available())
+            print("CUDA version (torch):", torch.version.cuda)
+            print("Device name :", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
 
 
     def log(self, step:str, duration:float):

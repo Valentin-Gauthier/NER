@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 class CasEN:
     def __init__(self,path:str, corpus_folder:str, result_folder:str, data:str=None, remove_MISC:bool=True, archive_folder:str=None, single_corpus:bool=True, run_casEN:bool=False, logging:bool=True, log_folder:str=None, timer:bool=True, verbose:bool=False):
         self.path = path  # The path for CasEN ipynb 
-        self.data = data  # The path for the Excel file
+        self.data = data  
         self.corpus_folder = Path(corpus_folder)  # The path for the folder of CasEN corpus
         self.remove_MISC = remove_MISC
         self.result_folder = Path(result_folder) # The path for the folder of CasEN result
@@ -38,6 +38,8 @@ class CasEN:
         if isinstance(self.data, str):
             self.data = Path(self.data)
             self.data_df = self.load_data()
+        elif isinstance(self.data, pd.DataFrame):
+            self.data_df = self.data
 
     # ---------------------------- TOOLS ----------------------- #
     def log(self, step:str, duration:float):

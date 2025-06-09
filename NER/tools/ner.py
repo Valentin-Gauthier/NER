@@ -6,17 +6,15 @@ import time
 from datetime import datetime
 import json
 
-class NER:
+class Ner:
     def __init__(self, 
-                 data:str, 
+                 data:str | pd.DataFrame, 
                  casEN_priority_merge:bool, 
                  casEN_graph_validation:str, 
                  extent_optimisation:bool, 
                  remove_duplicate_rows:bool, 
                  ner_result_folder:str,
                  excluded_names:str , 
-                 spaCy:SpaCy = None , 
-                 casEN:CasEN = None , 
                  dfs:list[pd.DataFrame]=None, 
                  make_excel_file:bool=True,
                  correction:str=None, 
@@ -25,24 +23,12 @@ class NER:
                  timer:bool=True, 
                  verbose:bool=False):
         
-        if dfs is None:
-            if spaCy is None or casEN is None:
-                raise ValueError("[NER init] You must provide either dfs (list of DataFrames) or both spaCy and casEN instances.")
-            elif not isinstance(spaCy.df, pd.DataFrame) or spaCy.df.empty:
-                raise ValueError("[NER init] Provided spaCy does not contain a valid DataFrame.")
-            elif not isinstance(casEN.df, pd.DataFrame) or casEN.df.empty:
-                raise ValueError("[NER init] Provided casEN does not contain a valid DataFrame.")
-            else:
-                # Extraire les df depuis les objets spaCy et casEN
-                self.dfs = [spaCy.df.copy(), casEN.df.copy()]
-        else:
-            if not all(isinstance(df, pd.DataFrame) for df in dfs):
-                raise ValueError("[NER init] dfs must be a list of pandas DataFrames.")
-            self.dfs = [df.copy() for df in dfs]
         
-        self.spaCy = spaCy
-        self.casEN = casEN
-        self.data = Path(data)
+        if not all(isinstance(df, pd.DataFrame) for df in dfs):
+            raise ValueError("[NER init] dfs must be a list of pandas DataFrames.")
+        self.dfs = [df.copy() for df in dfs]
+
+        self.data = data
         self.ner_result_folder = Path(ner_result_folder)
 
         if dfs is not None and not all(isinstance(df, pd.DataFrame) for df in dfs):
@@ -124,7 +110,7 @@ class NER:
 
     @chrono
     def merge(self) -> pd.DataFrame:
-        """Merge a list of DataFrames with unique key and dynamic method names from 'method' column."""
+        """Merge a list of DataFrames (without using pd.merge method because it make cartesian product)"""
 
         if self.verbose:
             for i, df in enumerate(self.dfs):
@@ -276,6 +262,68 @@ class NER:
         self.df = merge_df
         return self.df
 
+    @chrono
+    def composite_entity_priority(self) -> pd.DataFrame:
+        """Update composite method rows (e.g., casEN_Stanza) to _priority if they conflict with atomic methods and label is PER."""
+
+        with open(self.excluded_names, 'r', encoding="utf-8") as f:
+            name_list = json.load(f)[0].get("NER", [])
+
+        all_methods = self.df["method"].unique()
+
+        composite_methods = [m for m in all_methods if "_" in m and m != "casEN_opti"]
+        atomic_methods = [m for m in all_methods if "_" not in m]
+
+        if self.verbose:
+            print(f"[composite_entity_priority] Composite methods: {composite_methods}")
+            print(f"[composite_entity_priority] Atomic methods: {atomic_methods}")
+
+        rows_to_update = {}
+
+        for composite_method in composite_methods:
+            composite_df = self.df[self.df["method"] == composite_method]
+
+            for atomic_method in atomic_methods:
+                atomic_df = self.df[self.df["method"] == atomic_method]
+
+                merged = pd.merge(
+                    composite_df, atomic_df,
+                    on=["NER", "file_id"],
+                    suffixes=("_composite", "_atomic")
+                )
+
+                conflicts = merged[merged["NER_label_composite"] != merged["NER_label_atomic"]]
+
+                for _, row in conflicts.iterrows():
+                    if (
+                        row["NER_label_composite"] == "PER" and
+                        row["NER"].lower() not in [name.lower() for name in name_list]
+                    ):
+                        matching_rows = self.df[
+                            (self.df["method"] == composite_method) &
+                            (self.df["NER"] == row["NER"]) &
+                            (self.df["file_id"] == row["file_id"])
+                        ]
+                        for idx in matching_rows.index:
+                            current_method = self.df.at[idx, "method"]
+                            if not current_method.endswith("_priority"):
+                                rows_to_update[idx] = f"{current_method}_priority"
+
+        # Appliquer les changements
+        for idx, new_method in rows_to_update.items():
+            self.df.at[idx, "method"] = new_method
+
+        if self.verbose:
+            print(f"[composite_entity_priority] Updated {len(rows_to_update)} rows to _priority.")
+
+            source_counts = self.df["method"].value_counts()
+            for method, count in source_counts.items():
+                print(f"[composite_entity_priority] {method} : {count} lignes")
+
+        self.df = self.df.sort_values(by=["file_id"]).reset_index(drop=True)
+        return self.df
+
+
 
     @chrono
     def apply_correction(self) -> pd.DataFrame:
@@ -344,62 +392,51 @@ class NER:
 
     @chrono
     def casEN_priority(self) -> pd.DataFrame:
-        """Keep entities founds by SpaCy & CasEN with differents categories with casEN_priority method"""
+        """Prioritize CasEN labels (only PER) over conflicting labels from other methods by modifying 'method' field."""
 
-        spaCy_df = self.df[self.df["method"] == "spaCy"]
-        casEN_df = self.df[self.df["method"] == "casEN"]
-
-        merged = pd.merge(spaCy_df, casEN_df, on=["NER", "file_id"], suffixes=("_spacy","_casen"))
-
-        conflicts = merged[merged["NER_label_spacy"] != merged["NER_label_casen"]]
+        casEN_mask = self.df["method"] == "casEN"
+        casEN_df = self.df[casEN_mask]
+        other_methods = self.df["method"].unique()
+        other_methods = [m for m in other_methods if m != "casEN" and "_" not in m]
 
         if self.verbose:
-            print(f"[casEN_priority] {len(conflicts)} conflicting entities found (spaCy vs casEN)")
+            print(f"[casEN_priority] Comparing casEN with: {', '.join(other_methods)}")
 
         with open(self.excluded_names, 'r', encoding="utf-8") as f:
-            names = json.load(f)
+            name_list = json.load(f)[0].get("NER", [])
 
-        name_list = names[0].get("NER")
+        # Set of indices to modify in original df
+        indices_to_update = set()
 
-        new_rows = []
-        for _, row in conflicts.iterrows():
-            if row["NER_label_casen"] == "PER" and row["NER"].lower() not in [name.lower() for name in name_list]:
-                new_rows.append({
-                    "titles": row["titles_spacy"],
-                    "NER": row["NER"],
-                    "NER_label": row["NER_label_casen"],
-                    "desc": row["desc_spacy"],           
-                    "method": "casEN_priority",
-                    "main_graph" : row["main_graph_casen"],
-                    "second_graph" : row["second_graph_casen"],
-                    "third_graph" : row["third_graph_casen"],
-                    "file_id": row["file_id"]
-                })
-        if new_rows:
-            new_df = pd.DataFrame(new_rows)
-            new_df.drop_duplicates(subset=["titles", "NER", "NER_label", "desc", "method", "main_graph", "second_graph", "third_graph", "file_id"], inplace=True)
+        for method in other_methods:
+            other_df = self.df[self.df["method"] == method]
+            merged = pd.merge(other_df, casEN_df, on=["NER", "file_id"], suffixes=(f"_{method}", "_casen"))
+            conflicts = merged[merged[f"NER_label_{method}"] != merged["NER_label_casen"]]
 
-            self.df = pd.concat([self.df, new_df], ignore_index=True)
-            
-            if self.verbose:
-                print(f"[casEN_priority] {len(new_rows)} added.")
+            for _, row in conflicts.iterrows():
+                if (
+                    row["NER_label_casen"] == "PER"
+                    and row["NER"].lower() not in [name.lower() for name in name_list]
+                ):
+                    # Locate the original row index in self.df
+                    original_row = self.df[
+                        (self.df["method"] == "casEN") &
+                        (self.df["NER"] == row["NER"]) &
+                        (self.df["file_id"] == row["file_id"])
+                    ]
+                    indices_to_update.update(original_row.index.tolist())
 
-        self.df = self.df.sort_values(by=["file_id"], ascending=True).reset_index(drop=True)
+        # Apply the method update
+        self.df.loc[list(indices_to_update), "method"] = "casEN_priority"
 
         if self.verbose:
-            source_counts = self.df['method'].value_counts()
-            casen_count = source_counts.get('casEN', 0)
-            casen_opti_count = source_counts.get('casEN_opti', 0)
-            casen_priority_count = source_counts.get('casEN_priority', 0)
-            spacy_count = source_counts.get('spaCy', 0)
-            intersection_count = source_counts.get('intersection', 0)
+            print(f"[casEN_priority] Updated {len(indices_to_update)} rows from 'casEN' to 'casEN_priority'")
 
-            print(f"[casEN_priority] SpaCy only      : {spacy_count} lignes")
-            print(f"[casEN_priority] CasEN only      : {casen_count} lignes")
-            print(f"[casEN_priority] CasEN_opti only      : {casen_opti_count} lignes")
-            print(f"[casEN_priority] CasEN_priority only      : {casen_priority_count} lignes")
-            print(f"[casEN_priority] Intersection    : {intersection_count} lignes")
+            source_counts = self.df["method"].value_counts()
+            for method in source_counts.index:
+                print(f"[casEN_priority] {method} : {source_counts[method]} lignes")
 
+        self.df = self.df.sort_values(by=["file_id"]).reset_index(drop=True)
         return self.df
 
     @chrono
@@ -479,35 +516,10 @@ class NER:
     @chrono
     def run(self) -> str:
         """Run SpaCy & CasEN or use provided DataFrames, then merge results with NER optimisations."""
-        self.data_df = pd.read_excel(self.data)  # Load input data
-
-       # Cas 1 : utilisation directe de dfs (plusieurs DF possibles)
-        if hasattr(self, 'dfs') and self.dfs:
-            if self.verbose:
-                print(f"[run] Using {len(self.dfs)} provided DataFrames from dfs. Skipping spaCy/casEN runs.")
-            # Rien à faire ici, dfs est déjà prêt
+        if isinstance(self.data, pd.DataFrame):
+            self.data_df = self.data
         else:
-            # Cas 2 : on utilise spaCy + casEN
-            print(f"[run] Using spaCy/casEN to run.")
-            self.dfs = []
-
-            # SpaCy
-            if not isinstance(self.spaCy, pd.DataFrame):
-                self.spaCy.data_df = self.data_df
-                spacy_df = self.spaCy.run()
-            else:
-                spacy_df = self.spaCy
-            spacy_df["method"] = "spaCy"
-            self.dfs.append(spacy_df)
-
-            # CasEN
-            if not isinstance(self.casEN, pd.DataFrame):
-                self.casEN.data_df = self.data_df
-                casen_df = self.casEN.run()
-            else:
-                casen_df = self.casEN
-            casen_df["method"] = "casEN"
-            self.dfs.append(casen_df)
+            self.data_df = pd.read_excel(self.data)  # Load input data
 
         # --- MERGE --- #
         self.merge()
@@ -517,7 +529,8 @@ class NER:
             self.casEN_optimisation()
 
         if self.casEN_priority_merge:
-            self.casEN_priority()
+            #self.casEN_priority()
+            self.composite_entity_priority()
 
         if self.extent_optimisation:
             self.extent_optimisations()
