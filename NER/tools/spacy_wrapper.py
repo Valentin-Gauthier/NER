@@ -78,4 +78,7 @@ class SpaCy():
 
         self.df = pd.DataFrame(rows)
 
+        if self.verbose:
+            print(f"SpaCy : {self.df.shape}")
+
         return self.df

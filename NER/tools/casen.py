@@ -287,6 +287,9 @@ class CasEN:
         self.files = self.load()
         self.CasEN()
 
+        if self.verbose:
+            print(f"CasEN : {self.df.shape}")
+
         return self.df
 
 

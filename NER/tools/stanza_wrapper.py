@@ -103,7 +103,6 @@ class Stanza:
             for start, end, idx, row in idx_map:
                 if start <= ent_start < end:
                     desc_text = self.data_df.loc[idx, "desc"]
-                    print(f"{idx} - Entité : {ent.text}, Type : {ent.type}")
                     rows.append({
                         "titles": row.get("titles", "Default title name"),
                         "NER": ent.text,
@@ -115,4 +114,7 @@ class Stanza:
                     break
 
         self.df = pd.DataFrame(rows)
+
+        if self.verbose:
+            print(f"Stanza : {self.df.shape}")
         return self.df

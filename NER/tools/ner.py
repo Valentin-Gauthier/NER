@@ -148,9 +148,7 @@ class Ner:
                 left = row.get('method_left')
                 right = row.get('method_right')
                 if row["_merge"] == "both":
-                    if len(self.dfs) > 2:
-                        return f"{left}_{right}"
-                    return "intersection" 
+                    return f"{left}_{right}"
                 elif row["_merge"] == "left_only":
                     return left
                 else:
