@@ -23,7 +23,7 @@ Then, we apply a **cross-validation strategy** during result fusion:
 ### 🧹 Cross-System Agreement
 
 * If multiple systems detect the **same entity**, we merge their outputs and label them accordingly.
-* Example: If both **CasEN** and **Stanza** detect "Nora" as a `PER`, the merged label becomes `CasEN_Stanza`.
+* Example: If both **CasEN** and **Stanza** detect "Nora" as a `PER`, the merged method becomes `CasEN_Stanza`.
 
 ### ⚖️ Conflict Resolution with Priority Rules
 
