@@ -1,25 +1,57 @@
 # 🧠 Named Entity Recognition (NER)
 
-Optimisation of a natural language processing (NLP) project to detect and classify named entities (persons, locations, organizations, etc.) in French texts. 
+This project focuses on optimizing a natural language processing (NLP) pipeline to detect and classify named entities in **French texts**, across the following categories:
 
-On utilise diffèrentes methodes : 
-- CasEN (un outils basé sur Unitex, fait par des linguistes)
-- SpaCy 
-- Stanza
+* `PER` – Person
+* `LOC` – Location
+* `ORG` – Organization
+* `MISC` – Miscellaneous
 
-Dans un premier temps, on analyse toutes nos descriptions par chaque methodes. Puis c'est lors de la fusion des résultats qu'on utilise de la cross-validation. Si plusieurs system ont trouvé la même entitées alors on le precise, et on obtiens donc une ligne (ex : CasEN_Stanza :  entité trouvé par CasEN et Stanza).
-Ensuite on applique on principe de priorité sur les entitées trouvé par le plus de system possible mais avec differentes catégories.
-Par exemple si on à CasEN_Stanza qui ont trouvé la même entitées et Spacy qui lui a trouvé aussi mais avec une catégories differentes alors cette entité encore plus de change d'être valid mais surement avec la catégorie de CasEN et Stanza.
+We leverage **multiple NER tools** to maximize accuracy:
 
-![resultat Excel](images/image.png)
-
-On voit bien ici, que casEN_Stanza ont trouvé 'Nora' comme etant une 'PER' mais spacy lui à trouvé 'Nora' comme 'LOC' donc on modifie casEN_Stanza par casEN_Stanza_priority.
- 
-
+* **CasEN**: A linguistic rule-based system based on **Unitex**, developed by linguists.
+* **spaCy**: A fast and efficient NLP library.
+* **Stanza**: A deep learning-based NLP library from Stanford, well-suited for morphologically rich languages.
 
 ---
 
-## 🚀 Installation
+## 🔄 Multi-Model Entity Detection & Cross-Validation
+
+Each text description is first processed individually by all three systems (**CasEN**, **spaCy**, and **Stanza**).
+Then, we apply a **cross-validation strategy** during result fusion:
+
+### 🧹 Cross-System Agreement
+
+* If multiple systems detect the **same entity**, we merge their outputs and label them accordingly.
+* Example: If both **CasEN** and **Stanza** detect "Nora" as a `PER`, the merged label becomes `CasEN_Stanza`.
+
+### ⚖️ Conflict Resolution with Priority Rules
+
+When an entity is detected by **multiple systems with different labels**, we apply **priority rules**:
+
+* Entities found by **more systems** are considered more reliable.
+* If systems agree on the **entity** but not on the **label**, we prioritize the **most frequent or reliable label** among agreeing systems.
+
+#### 🧠 Example
+
+![Excel Result Preview](src/images/image.png)
+
+As shown above:
+
+* Both **CasEN** and **Stanza** classify **“Nora”** as a **Person (`PER`)**.
+* **spaCy**, however, classifies it as a **Location (`LOC`)**.
+
+📌 As a result, the merged label becomes:
+
+```txt
+CasEN_Stanza_priority
+```
+
+This indicates that CasEN and Stanza agreed on both the entity and the label, and their interpretation takes precedence over spaCy’s.
+
+---
+
+## 📅 Installation
 
 ### 1. Clone the repository
 
@@ -28,12 +60,15 @@ git clone https://github.com/Valentin-Gauthier/NER.git
 cd NER
 ```
 
-### 2. requirement
+### 2. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
+---
+
 ## ✍️ Author
 
-Valentin — Bachelor’s degree, 3rd year, Computer Science  
+Valentin — Bachelor’s degree, 3rd year, Computer Science
 Internship at LIFAT - 2025
