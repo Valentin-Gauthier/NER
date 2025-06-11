@@ -3,6 +3,7 @@ import spacy
 from pathlib import Path
 import time
 from datetime import datetime
+import re
 
 class SpaCy():
 
@@ -52,6 +53,30 @@ class SpaCy():
         return wrapper
 
     # ---------------------------------- METHODS ---------------------------------- #
+
+    def get_context(self, desc: str, ner: str, window: int) -> str:
+        """Return the original text context of an entity with surrounding words"""
+        # Tokenize with positions
+        matches = list(re.finditer(r"\w+|[^\w\s]", desc))
+        tokens = [m.group(0) for m in matches]
+        positions = [(m.start(), m.end()) for m in matches]
+
+        # Tokenize ner in same way
+        ner_tokens = re.findall(r"\w+|[^\w\s]", ner)
+        len_ner = len(ner_tokens)
+
+        # Match ner sequence in token list
+        for i in range(len(tokens) - len_ner + 1):
+            if [t.lower() for t in tokens[i:i + len_ner]] == [n.lower() for n in ner_tokens]:
+                start_idx = max(0, i - window)
+                end_idx = min(len(tokens), i + len_ner + window)
+
+                start_char = positions[start_idx][0]
+                end_char = positions[end_idx - 1][1]
+
+                return desc[start_char:end_char]
+        return desc
+
     @chrono
     def run(self) -> pd.DataFrame:
 
@@ -65,13 +90,11 @@ class SpaCy():
                 continue
             doc = self.nlp(row["desc"])
             for ent in doc.ents:
-                start = max(0, ent.start_char - 40)
-                end = ent.end_char + 40
                 rows.append({
                     "titles" : self.data_df.loc[idx, "titles"],
                     "NER" : ent.text,
                     "NER_label" : ent.label_,
-                    "desc" : row["desc"][start:end],
+                    "desc" : self.get_context(row["desc"], ent.text, 5),
                     "method": "spaCy",
                     "file_id" : idx
                 })

@@ -60,17 +60,27 @@ class Stanza:
         return wrapper
 
 
-    def get_context(self, desc:str, ner:str, window:int) -> str:
-        """Return the context of entity"""
-        tokenized_desc = re.findall(r"\w+|[^\w\s]", desc.lower())
-        tokenized_ner = re.findall(r"\w+|[^\w\s]", ner.lower())
-        len_ner = len(tokenized_ner)
+    def get_context(self, desc: str, ner: str, window: int) -> str:
+        """Return the original text context of an entity with surrounding words"""
+        # Tokenize with positions
+        matches = list(re.finditer(r"\w+|[^\w\s]", desc))
+        tokens = [m.group(0) for m in matches]
+        positions = [(m.start(), m.end()) for m in matches]
 
-        for i in range(len(tokenized_desc) - len_ner + 1):
-            if tokenized_desc[i:i + len_ner] == tokenized_ner:
-                start = max(0, i - window)
-                end = min(len(tokenized_desc), i + len_ner + window)
-                return ' '.join(tokenized_desc[start:end])
+        # Tokenize ner in same way
+        ner_tokens = re.findall(r"\w+|[^\w\s]", ner)
+        len_ner = len(ner_tokens)
+
+        # Match ner sequence in token list
+        for i in range(len(tokens) - len_ner + 1):
+            if [t.lower() for t in tokens[i:i + len_ner]] == [n.lower() for n in ner_tokens]:
+                start_idx = max(0, i - window)
+                end_idx = min(len(tokens), i + len_ner + window)
+
+                start_char = positions[start_idx][0]
+                end_char = positions[end_idx - 1][1]
+
+                return desc[start_char:end_char]
         return desc
     
     @chrono
@@ -107,7 +117,7 @@ class Stanza:
                         "titles": row.get("titles", "Default title name"),
                         "NER": ent.text,
                         "NER_label": ent.type,
-                        "desc": self.get_context(desc_text, ent.text, 10),
+                        "desc": self.get_context(desc_text, ent.text, 5),
                         "method": "Stanza",
                         "file_id": idx
                     })

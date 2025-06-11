@@ -122,7 +122,7 @@ class Ner:
             df = df.copy()
             df['method'] = df.get('method', f"df{i}")
             df['occurrence_id'] = df.groupby(["NER", "NER_label", "file_id"]).cumcount()
-            df['key'] = df[["NER", "NER_label", "file_id", "occurrence_id"]].apply(tuple, axis=1)
+            df['key'] = df[["NER", "NER_label","file_id", "occurrence_id"]].apply(tuple, axis=1)
             prepared_dfs.append(df)
 
         # Étape 2 : fusion progressive
@@ -286,7 +286,7 @@ class Ner:
 
                 merged = pd.merge(
                     composite_df, atomic_df,
-                    on=["NER", "file_id"],
+                    on=["NER","file_id"],
                     suffixes=("_composite", "_atomic")
                 )
 
@@ -413,8 +413,8 @@ class Ner:
 
             for _, row in conflicts.iterrows():
                 if (
-                    row["NER_label_casen"] == "PER"
-                    and row["NER"].lower() not in [name.lower() for name in name_list]
+                    #row["NER_label_casen"] == "PER" and 
+                    row["NER"].lower() not in [name.lower() for name in name_list]
                 ):
                     # Locate the original row index in self.df
                     original_row = self.df[
