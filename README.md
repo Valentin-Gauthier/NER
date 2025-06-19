@@ -105,7 +105,7 @@ This section presents the evolution of NER performance across different configur
 ### 🧪 Initial Evaluation (CasEN ∩ SpaCy)
 
 Entities detected using the intersection of CasEN and SpaCy systems at the beginning of the pipeline.
-```bash
+
 | Category | Total Entities | Accuracy |
 |----------|----------------|----------|
 | NE       | 4,085          | 97.67%   |
@@ -114,12 +114,12 @@ Entities detected using the intersection of CasEN and SpaCy systems at the begin
 | ORG      | 129            | 66.67%   |
 | MISC     | 0              | 0.00%    |
 
-```
+
 
 ### 📁 CasEN on Single Corpus File (CasEN ∩ SpaCy)
 
 Performance after switching to a **single concatenated file** approach for CasEN.
-```bash
+
 | Category | Total Entities | Accuracy | Entity Gain | Accuracy Loss |
 |----------|----------------|----------|--------------|----------------|
 | NE       | 5,327          | ✅ 97.61%   | 🔼 +30.40%     | 🔽 -0.06%         |
@@ -128,12 +128,12 @@ Performance after switching to a **single concatenated file** approach for CasEN
 | ORG      | 139            | ⚠️ 66.92%   | 🔼 +7.75%      | 🔽 -0.26%         |
 | MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
 
-```
+
 
 ### 🚀 CasEN + Optimized Graphs
 
 Results using **CasEN with graph optimization** strategies.
-```bash
+
 | Category | Total Entities | Accuracy | Entity Gain | Accuracy Loss |
 |----------|----------------|----------|--------------|----------------|
 | NE       | 6,010          | ✅ 97.14%   | 🔼 +12.82%     | 🔽 -0.47%         |
@@ -142,12 +142,11 @@ Results using **CasEN with graph optimization** strategies.
 | ORG      | 225            | ⚠️ 75.12%   | 🔼 +61.87%     | 🔽 -8.20%         |
 | MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
 
-```
 
 ### 🧠 Full System: CasEN + SpaCy + Stanza + Optimization & Priority Rules
 
 Final performance combining **all systems** with **graph priority strategies** and **CasEN optimizations**.
-```bash
+
 | Category | Total Entities | Accuracy | Entity Gain | Accuracy Loss |
 |----------|----------------|----------|--------------|----------------|
 | NE       | 7,086          | ✅ 97.08%   | 🔼 +17.90%     | 🔽 -0.06%         |
@@ -155,12 +154,12 @@ Final performance combining **all systems** with **graph priority strategies** a
 | LOC      | 1,267          | ✅ 98.30%   | 🔽 -2.09%      | 🔼 +0.52%         |
 | ORG      | 227            | ⚠️ 82.84%   | 🔼 +0.89%      | 🔽 -7.72%         |
 | MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
-```
+
 
 
 #### ✅ Summary
 
-```bash
+
 | Category | Total Entities | Accuracy | Entity Gain | Accuracy Loss |
 |----------|----------------|----------|--------------|----------------|
 | NE       | 7,086          | ✅97.08%   | 🔼 +73.46%     | 🔽 -0.60%         |
@@ -168,7 +167,7 @@ Final performance combining **all systems** with **graph priority strategies** a
 | LOC      | 1,267          | ✅98.30%   | 🔼 +4.54%      | 🔽 -0.38%         |
 | ORG      | 227            | ⚠️ 82.84%   | 🔼 +75.97%      | 🔼 +16.18%         |
 | MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
-```
+
 
 
 ---
@@ -192,4 +191,4 @@ pip install -r requirements.txt
 ## ✍️ Author
 
 Valentin — Bachelor’s degree, 3rd year, Computer Science
-Internship at LIFAT - 2025
+Internship at LIFAT - 2025.
