@@ -107,14 +107,15 @@ class CasEN:
     def generate_corpus(self):
         """ Generate CasEN corpus"""
 
-        missing_desc = (self.data_df["desc"] == "").sum()
+        missing_desc = self.data_df["desc"].isna().sum()
 
         if self.single_corpus:
             corpus_file = self.corpus_folder / "corpus.txt"
             with open(corpus_file, 'w', encoding="utf-8") as f:
                 for idx, row in self.data_df.iterrows():
+                    desc = row["desc"]
                     f.write(f'<doc id="{idx}">')
-                    f.write(str(row["desc"]))
+                    f.write(str(desc) if not pd.isna(desc) else "")
                     f.write('</doc>\n')
             if self.verbose:
                 print(f"[generate file(s)] Single corpus file generated: {corpus_file}")
@@ -124,8 +125,9 @@ class CasEN:
             for idx, row in self.data_df.iterrows():
                 filename = self.corpus_folder / f"doc_{idx}.txt"
                 with open(filename, 'w', encoding="utf-8") as f:
+                    desc = row["desc"]
                     f.write(f'<doc id="{idx}">')
-                    f.write(str(row["desc"]))
+                    f.write(str(desc) if not pd.isna(desc) else "")
                     f.write('</doc>\n')
             if self.verbose:
                 print(f"[generate file(s)] {len(self.data_df)} individual corpus files generated in {self.corpus_folder}")
@@ -156,7 +158,7 @@ class CasEN:
                 try:
                     shutil.move(str(file), str(target/ file.name))
                     if self.verbose:
-                        print(f"[prepare folder] Moved: {file.name} → {target}")
+                        print(f"[prepare folder] Moved: {file.name} to {target}")
                 except Exception as e:
                     print(f"[prepare folder] Failed to move {file}: {e}")
 
@@ -208,29 +210,66 @@ class CasEN:
                 return desc[start_char:end_char]
         return desc
 
-    def get_entities_from_desc(self, soup_doc:BeautifulSoup, doc_id:int) -> list[dict]:
-        """Return every entities founds in one description"""
+    def get_entities_from_desc(self, soup_doc: BeautifulSoup, doc_id: int) -> list[dict]:
         entities = []
-        excluded_tags = ["s", "p", "doc"]
-        for element in soup_doc.find_all(lambda tag : tag not in excluded_tags and tag.has_attr("grf")):
-            if any(ancestor.has_attr("grf") for ancestor in element.parents if ancestor.name not in excluded_tags):
-                continue
-            main_grf = element["grf"]
-            children = [child for child in element.find_all(recursive=False) if child.has_attr("grf")]
+        desc = self.data_df.loc[doc_id, "desc"]
+        char_pos = 0
+
+        for elem in soup_doc.find_all(lambda tag: tag.has_attr("grf") and tag.name not in ["s", "p", "doc"]):
+            # On vérifie que l'élément ne soit pas inclus dans un parent qui a aussi 'grf'
+            if any(parent.has_attr("grf") for parent in elem.parents if parent.name not in ["s", "p", "doc"]):
+                continue  # on saute cet élément pour ne prendre que les parents
+
+            entity_text = elem.get_text()
+            start = desc.find(entity_text, char_pos)
+            if start == -1:
+                start = desc.find(entity_text)
+                if start == -1:
+                    continue
+            end = start + len(entity_text)
+
+            main_grf = elem["grf"]
+            children = [child for child in elem.find_all(recursive=False) if child.has_attr("grf")]
             second = children[0]["grf"] if len(children) >= 1 else ""
-            third  = children[1]["grf"] if len(children) >= 2 else ""
+            third = children[1]["grf"] if len(children) >= 2 else ""
 
             entities.append({
                 "file_id":       doc_id,
-                "tag":           element.name,
-                "text":          element.get_text(),
+                "tag":           elem.name,
+                "text":          entity_text,
                 "grf":           main_grf,
                 "second_graph":  second,
-                "third_graph":   third
+                "third_graph":   third,
+                "entity_start":  start,
+                "entity_end":    end
             })
 
+            char_pos = end
 
         return entities
+    # def get_entities_from_desc(self, soup_doc:BeautifulSoup, doc_id:int) -> list[dict]:
+    #     """Return every entities founds in one description"""
+    #     entities = []
+    #     excluded_tags = ["s", "p", "doc"]
+    #     for element in soup_doc.find_all(lambda tag : tag not in excluded_tags and tag.has_attr("grf")):
+    #         if any(ancestor.has_attr("grf") for ancestor in element.parents if ancestor.name not in excluded_tags):
+    #             continue
+    #         main_grf = element["grf"]
+    #         children = [child for child in element.find_all(recursive=False) if child.has_attr("grf")]
+    #         second = children[0]["grf"] if len(children) >= 1 else ""
+    #         third  = children[1]["grf"] if len(children) >= 2 else ""
+
+    #         entities.append({
+    #             "file_id":       doc_id,
+    #             "tag":           element.name,
+    #             "text":          element.get_text(),
+    #             "grf":           main_grf,
+    #             "second_graph":  second,
+    #             "third_graph":   third
+    #         })
+
+
+    #     return entities
 
     @chrono
     def get_entities(self) -> list[dict]:
@@ -243,8 +282,7 @@ class CasEN:
         for file in self.files:
             with open(file, 'r', encoding="utf-8") as f:
                 content = f.read()
-                
-            content = re.sub(r'</?s\b[^>]*>', '', content)
+            content = re.sub(r'</?s\b[^>]*>', '', content) # remove <s> & </s>
             content = re.sub(r"</?s>", "", content)
             soup = BeautifulSoup(content, "html.parser")
             for doc in soup.find_all("doc"):
@@ -256,7 +294,8 @@ class CasEN:
     @chrono
     def CasEN(self) -> pd.DataFrame:
         """Build a DataFrame with CasEN analyse"""
-        
+        window_size = 30
+
         if self.data_df is None:
             self.load_data()
         
@@ -269,17 +308,27 @@ class CasEN:
             else:
                 file_id = entity["file_id"]
                 ner =  entity["text"]
-                context = self.get_context(self.data_df.loc[file_id, "desc"], ner, 5)
+
+                entity_start = int(entity.get("entity_start"))
+                entity_end = int(entity.get("entity_end"))
+                
+                desc = self.data_df.loc[file_id,"desc"]
+                start = max(entity_start - window_size, 0)
+                end = min(entity_end + window_size, len(desc))
+                context_window = desc[start:end]
+
                 rows.append({
                     "titles" : self.data_df.loc[file_id, "titles"],
                     "NER" : ner,
                     "NER_label" : ner_label,
-                    "desc" : context,
+                    "desc" : context_window,
                     "method" : "casEN",
                     "main_graph" : entity["grf"],
                     "second_graph" : entity.get("second_graph", ""),
                     "third_graph" : entity.get("third_graph", ""),
-                    "file_id" : file_id
+                    "file_id" : file_id,
+                    "entity_start" : entity_start,
+                    "entity_end" : entity_end,
                 })
 
         self.df = pd.DataFrame(rows)

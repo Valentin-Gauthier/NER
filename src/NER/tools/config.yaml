@@ -1,0 +1,244 @@
+
+#########################################################################################################################
+#                                                                                                                       #
+#                                                    CONFIG - NER                                                       #
+#                                                                                                                       # 
+#########################################################################################################################
+
+
+log_folder : ".\\Logs" # The path for the folder witch contains log.txt file
+ner_result_folder: ".\\Results" # The path for the Excel file generate at the end (if make_excel is True)
+extention : "xlsx" #support xlsx & csv
+
+# Columns to keep in the last DataFrame (you have to keep file_id if you want to apply correction)
+columns: ["titles", "sub_title", "days", "channel", "category", "NER", "NER_label", "clean_titles", "method", "file_id"]
+final_methods_to_keep: ["casEN_opti", "casEN_spaCy_stanza", "casEN_stanza_priority", "casEN_stanza", "spaCy_stanza_priority"]
+
+
+# ========================== SETTINGS ===========================
+
+# Size of the window (number of characters) for extracting descriptions
+description_window: 30
+
+
+
+
+
+
+#########################################################################################################################
+#                                                                                                                       #
+#                                                    CONFIG - CasEN                                                     #
+#                                                                                                                       # 
+#########################################################################################################################
+# ============================ PATHS ============================
+
+# Path to the Jupyter Notebook used to run CasEN
+ipynb_file: "C:\\Users\\valen\\Documents\\Informatique-L3\\Stage\\CasEN_fr.2.0\\CasEN.ipynb"
+
+# Folder containing input files to be analyzed by CasEN
+corpus_folder: "C:\\Users\\valen\\Documents\\Informatique-L3\\Stage_NER\\NER\\src\\Results\\Corpus"
+
+# Output folder where CasEN results will be saved
+result_folder: "C:\\Users\\valen\\Documents\\Informatique-L3\\Stage_NER\\NER\\src\\Results\\CasEN\\Res_CasEN"
+
+# Folder for archiving files
+archive_folder: "C:\\Users\\valen\\Documents\\Informatique-L3\\Stage_NER\\NER\\src\\NER\\Archives"
+
+# ============================ LABELS ===========================
+
+# Tag names used to identify entity types
+labels:
+  PER:  ["persname", "surname", "forename"]    # Person entities
+  LOC:  ["placename", "geoname", "adress", "adrline"]  # Location entities
+  ORG:  ["orgname", "org"]                     # Organization entities
+ # the rest will be considered as MISC
+
+
+# ========================== EXCLUDED NAMES ===========================
+# List of words that pass perfectly in the prfpersGenerique but which we know cannot be people (or too rarely)
+excluded_names_list : [ 
+                      "France",
+                      "Paris",
+                      "Espagne",
+                      "Allemand",
+                      "Mexique",
+                      "Prix",
+                      "Nord",
+                      "NASA",
+                      "Real Madrid",
+                      "SUPER",
+                      ]
+
+# ========================== GRAPHS (casEN_opti) ===========================
+# These are CasEN graphs which after analysis enable us to recover as much data as possible without losing too much precision. 
+# if only CasEN found entity with thoses graphs, the method is gonna change for casEN_opti
+
+casEN_opti:
+  - main_graph: "grfpersContextePersonne"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grfpersAmbigus"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grfgeog"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grftoolPolylexical"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grfpersCivilitePersonne"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grforgPlaceGeoPolitique"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grforgAssemblee"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grftagOrgNameEntreprise"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grfgeogRiviere"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grforgSuiviDeParentheses"
+    second_graph: ""
+    third_graph: ""
+
+  - main_graph: "grfgeogPlaceDico"
+    second_graph: "grftoolPolylexical"
+    third_graph: ""
+
+  - main_graph: "grfgeogPlaceDico"
+    second_graph: "grforgPlaceGeoPolitique"
+    third_graph: ""
+
+  - main_graph: "grforgGenerique"
+    second_graph: "grfgeogHydro"
+    third_graph: ""
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgPolice"
+    third_graph: ""
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgTransport"
+    third_graph: ""
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgArmee"
+    third_graph: ""
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgGouvernement"
+    third_graph: ""
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgSport"
+    third_graph: ""
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgAssemblee"
+    third_graph: ""
+
+  - main_graph: "grfpersCivilitePersonne"
+    second_graph: "grftagNomFamille"
+    third_graph: ""
+
+  - main_graph: "grfpersCivilitePersonne"
+    second_graph: "grftagCiviliteS"
+    third_graph: ""
+
+  - main_graph: "grfpersCivilitePersonne"
+    second_graph: "grftagTitreNobiliaireS"
+    third_graph: ""
+
+  - main_graph: "grfpersContextePersonne"
+    second_graph: "grftagNomFamille"
+    third_graph: ""
+
+  - main_graph: "grfpersPrenomNom"
+    second_graph: "grftagCiviliteS"
+    third_graph: ""
+
+  - main_graph: "grfplace"
+    second_graph: "grforgPolice"
+    third_graph: ""
+
+  - main_graph: "grfplace"
+    second_graph: "grfpersPrenomNom"
+    third_graph: ""
+
+  - main_graph: "grfplace"
+    second_graph: "grforgProximite"
+    third_graph: ""
+
+  - main_graph: "grfplace"
+    second_graph: "grforgEconomie"
+    third_graph: ""
+
+  - main_graph: "grfplace"
+    second_graph: "grfpersContextePersonne"
+    third_graph: ""
+
+  - main_graph: "grftagOrgFunder"
+    second_graph: "grforgProximite"
+    third_graph: ""
+
+  - main_graph: "grftagOrgNameEntreprise"
+    second_graph: "grfpersPrenomNom"
+    third_graph: ""
+
+  - main_graph: "grftagOrgNameEntreprise"
+    second_graph: "grfpersGenerique"
+    third_graph: ""
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgArmee"
+    third_graph: "grfpersPrenomNom"
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgProximite"
+    third_graph: "grfpersPrenomNom"
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgMusique"
+    third_graph: "grfpersPrenomNom"
+
+  - main_graph: "grforgSeule"
+    second_graph: "grforgAssemblee"
+    third_graph: "grfpersGenerique"
+
+  - main_graph: "grfpersCivilitePersonne"
+    second_graph: "grftagCiviliteS"
+    third_graph: "grftagNomFamille"
+
+  - main_graph: "grfpersCivilitePersonne"
+    second_graph: "grftagTitreNobiliaireS"
+    third_graph: "grftagNomFamilleDe"
+
+  - main_graph: "grfpersPrenomNom"
+    second_graph: "grftagPrenom"
+    third_graph: "grftagNumRegne"
+
+  - main_graph: "grfpersPrenomNom"
+    second_graph: "grftagPrenom"
+    third_graph: "grftagTitreNobiliaireS"
+
+  - main_graph: "grfpersPrenomNom"
+    second_graph: "grftagCiviliteS"
+    third_graph: "grftagParticule"
+
+  - main_graph: "grfplace"
+    second_graph: "grfpersContextePersonne"
+    third_graph: "grfpersContextePersonne"
+    

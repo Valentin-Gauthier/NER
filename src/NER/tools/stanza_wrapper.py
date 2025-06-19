@@ -1,23 +1,31 @@
 import stanza
 import pandas as pd
 import time
-import datetime
+from datetime import datetime
 from pathlib import Path
+import yaml
+
+
+DEFAULT_CONFIG_LOC = Path(__file__).parent / "config.yaml"
 
 class StanzaConfig:
 
-    def __init__(self, data:pd.DataFrame, use_gpu:bool=True, log_folder:str=None, timer_option:bool=False, log_option:bool=False, verbose:bool=False):
+    def __init__(self, 
+                 use_gpu:bool=True, 
+                 light_mode:bool=True,
+                 stanza_config:str=DEFAULT_CONFIG_LOC,
+                 timer:bool=False, 
+                 logging:bool=False, 
+                 verbose:bool=False
+                 ):
         self.use_gpu = use_gpu
+        self.light_mode = light_mode
+        self.stanza_config = stanza_config
         self.verbose = verbose
-        self.log_folder = Path(log_folder) if log_folder else None
-        self.timer_option = timer_option
-        self.log_option = log_option
-        
-
-        if isinstance(data, pd.DataFrame):
-            self.data = data
-        else:
-            raise TypeError(f"Excpected a pandas DataFrame, got {format(type(data).__name__)}")
+        self.timer = timer
+        self.logging = logging
+    
+        self.load_config()
 
         # Load the French Pipeline (tokenize : slice the text, mwt: usefull for french word like "ajourd'hui", ner : analyse the text)
         self.nlp = stanza.Pipeline(lang="fr", processors='tokenize,mwt,ner', use_gpu=self.use_gpu)
@@ -27,10 +35,11 @@ class StanzaConfig:
     def log(self, step:str, duration:float):
         timestamp = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
 
-        if self.log_folder.is_dir(): 
-            log_file_path = self.log_folder / "log.txt" # if the path is a folder -> add a filename
+        log_folder = Path(self.config["log_folder"])
+        if log_folder.is_dir(): 
+            log_file_path = log_folder / "log.txt" # if the path is a folder -> add a filename
         else:
-            log_file_path = self.log_folder
+            log_file_path = log_folder
 
 
         log_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -40,31 +49,48 @@ class StanzaConfig:
 
     def chrono(func):
         def wrapper(self, *args, **kwargs):
-            if self.timer_option or self.log_option:
+            if self.timer or self.logging:
                 start = time.time()
             result = func(self, *args, **kwargs)
-            if self.timer_option or self.log_option:
+            if self.timer or self.logging:
                 duration = time.time() - start
-                if self.timer_option:
+                if self.timer:
                     print(f"{func.__name__} in : {duration:.2f}s")
-                if self.log_option:
+                if self.logging:
                     self.log(func.__name__, duration)
             return result
         return wrapper
 
-    
+    def load_config(self):
+        """Load the JSON config about casEN"""
+
+        if not self.stanza_config.is_file():
+            raise FileNotFoundError(f"[load config] The provided file was not found ! {self.stanza_config}")
+        else:
+            with open(self.stanza_config, 'r', encoding="utf-8") as f:
+                self.config = yaml.safe_load(f)
+                if self.verbose: print(f"[load config] Config Loaded sucessfuly !")
+
+    def load_data(self, data:pd.DataFrame | str):
+        """Load the data"""
+        if isinstance(data, pd.DataFrame):
+            self.data = data
+        elif isinstance(data, str):
+            self.data = pd.read_excel(data)
+        else:
+            raise ValueError(f"Can't make DataFrame with the provided data ! {data}")
+
     # ========================================== METHODS =================================================
 
     @chrono
-    def run(self) -> pd.DataFrame:
+    def run(self, data:pd.DataFrame) -> pd.DataFrame:
         """Make a DataFrame with the result of Stanza analyses (bulk processing)"""
-
-        window_size = 30
+        self.load_data(data)
+        window_size = self.config["description_window"]
 
         if self.verbose:
             print(f"[stanza] Stanza version: {stanza.__version__}")
             print(f"[stanza] Pipeline lang: {self.nlp.lang}")
-            print(f"[stanza] window size of description: {window_size}")
 
         # Concaténer toutes les descriptions avec des séparateurs uniques
         text_blocks = []
@@ -95,22 +121,31 @@ class StanzaConfig:
                     relative_start = ent_start - block_start
                     relative_end = ent_end - block_start
 
-
-                    text = self.data.loc[file_id, "desc"]
-                    context_start = max(relative_start - window_size, 0)
-                    context_end = min(relative_end + window_size, len(text))
-                    context_window = text[context_start:context_end]
-
-                    rows.append({
-                        "titles": self.data.loc[file_id, "titles"],
+                    if self.light_mode:
+                        rows.append({
                         "NER": ent.text,
                         "NER_label": ent.type,
-                        "desc": context_window,
                         "method": "stanza",
                         "file_id": file_id,
                         "entity_start": relative_start,
                         "entity_end": relative_end
                     })
+                    else:
+                        text = self.data.loc[file_id, "desc"]
+                        context_start = max(relative_start - window_size, 0)
+                        context_end = min(relative_end + window_size, len(text))
+                        context_window = text[context_start:context_end]
+
+                        rows.append({
+                            "titles": self.data.loc[file_id, "titles"],
+                            "NER": ent.text,
+                            "NER_label": ent.type,
+                            "desc": context_window,
+                            "method": "stanza",
+                            "file_id": file_id,
+                            "entity_start": relative_start,
+                            "entity_end": relative_end
+                        })
                     break  # une entité ne peut appartenir qu'à un seul bloc
 
         self.df = pd.DataFrame(rows)
