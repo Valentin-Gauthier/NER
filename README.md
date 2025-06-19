@@ -15,6 +15,52 @@ We leverage **multiple NER tools** to maximize accuracy:
 
 ---
 
+### 📁 Single vs. Multiple Corpus Processing
+
+We implemented an option that lets you choose whether to generate **one file per description** or a **single file for all descriptions combined**.
+
+To preserve the traceability of each description's origin, we wrap them with custom tags in the merged file:
+
+```xml
+<doc id="X">
+    [description content]
+</doc>
+```
+
+This allows the system to:
+
+- ✅ Significantly reduce execution time (more than 2× faster in our tests)
+
+- ✅ Better exploit generic graph-based rules, which can tag all similar entities once one is found
+
+📊 Entity Detection Results
+
+| Mode                     | Total Entities Found | Gain    |
+| ------------------------ | -------------------- | ------- |
+| One file per description | 9,446                | —       |
+| One file for all         | 13,233               | +40.09% |
+
+
+---
+
+## 🚀 CasEN Optimization
+
+We then evaluated the **precision** and **entity yield** of each graph individually.
+
+This analysis helped us identify certain graphs—or combinations of graphs—that provided the most benefit. We leveraged this insight to **prioritize and retain their extracted entities**, even if they were not detected by other systems.
+
+### 🔍 Example of a Graph Sequence
+
+| Step            | Graph Name               |
+|------------------|--------------------------|
+| main_graph      | `grfpersCivilitePersonne` |
+| second_graph  | `grftagCiviliteS`         |
+| third_graph   | `grftagNomFamille`        |
+
+These optimized sequences allow us to improve both recall and consistency across descriptions by capturing entities that would otherwise be missed.
+
+
+---
 ## 🔄 Multi-Model Entity Detection & Cross-Validation
 
 Each text description is first processed individually by all three systems (**CasEN**, **spaCy**, and **Stanza**).
@@ -34,7 +80,7 @@ When an entity is detected by **multiple systems with different labels**, we app
 
 #### 🧠 Example
 
-![Excel Result Preview](src/images/image.png)
+![Excel Result Preview](src\images\image.png)
 
 As shown above:
 
