@@ -1,14 +1,14 @@
 import pandas as pd
 from .spacy_wrapper import SpaCyConfig
-from .casen_config import Casen
+from .casen_config import CasenConfig
 from .stanza_wrapper import StanzaConfig
-from .ner import Ner
+from .ner_config import NerConfig
 
 
 
 def NER_Consensus(data:pd.DataFrame) -> pd.DataFrame:
     """
-        Process every system to recover every entity of the description column
+        Process every system to recover every entity of the description column from the data's DataFrame
 
         Parameters:
             - data (pd.DataFrame) : 
@@ -18,17 +18,17 @@ def NER_Consensus(data:pd.DataFrame) -> pd.DataFrame:
     
     """
     # init system
-    c = Casen()
-    Stanza = StanzaConfig()
-    Spacy = SpaCyConfig()
+    c = CasenConfig()
+    sp = SpaCyConfig()
+    st = StanzaConfig()
+    
+    Casen_df = c.run(data)
+    Spacy_df =  sp.run(data)
+    Stanza_df = st.run(data)
 
-    Casen_df = Casen.run(data)
-    Stanza_df = StanzaConfig.run(data)
-    Spacy_df =  SpaCyConfig.run(data)
+    ner = NerConfig()
 
-    ner = Ner()
-
-    ner_df = Ner.run()
+    ner_df = ner.run(data=data, dfs=[Casen_df, Spacy_df ,Stanza_df])
 
     return ner_df
 

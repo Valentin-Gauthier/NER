@@ -5,21 +5,18 @@ from datetime import datetime
 from pathlib import Path
 import yaml
 
-
-DEFAULT_CONFIG_LOC = Path(__file__).parent / "config.yaml"
-
 class StanzaConfig:
 
     def __init__(self, 
                  use_gpu:bool=True, 
-                 light_mode:bool=True,
-                 stanza_config:str=DEFAULT_CONFIG_LOC,
+                 production_mode:bool=True,
+                 stanza_config:str=Path(__file__).parent / "config.yaml",
                  timer:bool=False, 
                  logging:bool=False, 
                  verbose:bool=False
                  ):
         self.use_gpu = use_gpu
-        self.light_mode = light_mode
+        self.production_mode = production_mode
         self.stanza_config = stanza_config
         self.verbose = verbose
         self.timer = timer
@@ -121,7 +118,7 @@ class StanzaConfig:
                     relative_start = ent_start - block_start
                     relative_end = ent_end - block_start
 
-                    if self.light_mode:
+                    if self.production_mode:
                         rows.append({
                         "NER": ent.text,
                         "NER_label": ent.type,

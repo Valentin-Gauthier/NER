@@ -1,5 +1,3 @@
-from .spacy_wrapper import SpaCyConfig
-from .casen import CasEN
 from pathlib import Path
 import pandas as pd
 import time
@@ -14,7 +12,7 @@ class NerConfig:
                  process_casen_opti:bool=True,
                  remove_duplicated_entity_per_desc:bool=True,
                  keep_only_trustable_methods:bool=True,
-                 make_excel_file:bool=False,
+                 save_to_file:bool=False,
                  production_mode:bool=True,
                  ner_config:str=Path(__file__).parent / "config.yaml",
                  logging:bool=False,
@@ -25,7 +23,7 @@ class NerConfig:
         self.process_casen_opti = process_casen_opti
         self.remove_duplicated_entity_per_desc = remove_duplicated_entity_per_desc
         self.keep_only_trustable_methods = keep_only_trustable_methods
-        self.make_excel_file = make_excel_file
+        self.save_to_file = save_to_file
         self.production_mode = production_mode
         self.ner_config = Path(ner_config)
         self.logging = logging
@@ -407,7 +405,7 @@ class NerConfig:
             self.apply_correction(correction)
 
         # --- SAVE --- #
-        if self.make_excel_file:
+        if self.save_to_file:
             saved = self.save()
             print(f"File saved at : {saved}")
         return self.df

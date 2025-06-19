@@ -5,20 +5,19 @@ from datetime import datetime
 from pathlib import Path
 import yaml
 
-DEFAULT_CONFIG_LOC = Path(__file__).parent / "config.yaml"
 
 class SpaCyConfig:
 
     def __init__(self, 
                  model:str="fr_core_news_sm",
-                 light_mode:bool = True,
-                 spacy_config:str=DEFAULT_CONFIG_LOC,
+                 production_mode:bool = True,
+                 spacy_config:str=Path(__file__).parent / "config.yaml",
                  timer:bool=False, 
                  logging:bool=False, 
                  verbose:bool=False
                  ):
         
-        self.light_mode = light_mode
+        self.production_mode = production_mode
         self.verbose = verbose
         self.timer = timer
         self.logging = logging
@@ -104,7 +103,7 @@ class SpaCyConfig:
                 continue
             doc = self.nlp(row["desc"])
             for ent in doc.ents:
-                if self.light_mode:
+                if self.production_mode:
                     rows.append({
                         "NER" : ent.text,
                         "NER_label" : ent.label_,

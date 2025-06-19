@@ -8,23 +8,21 @@ from bs4 import BeautifulSoup
 import yaml
 
 
-DEFAULT_CONFIG_LOC = Path(__file__).parent / "config.yaml"
-
-class Casen:
+class CasenConfig:
 
     def __init__(self, 
                  run_casen:bool=True,
                  single_corpus:bool=True, 
-                 light_mode:bool=True,
+                 production_mode:bool=True,
                  remove_misc:bool=True, 
                  logging:bool=False,
                  timer:bool=False,
                  archiving_result:bool=False,
-                 casen_config:str= DEFAULT_CONFIG_LOC, 
+                 casen_config:str= Path(__file__).parent / "config.yaml", 
                  verbose:bool=False
                  ):
         self.casen_config = Path(casen_config)
-        self.light_mode = light_mode
+        self.production_mode = production_mode
         self.remove_misc = remove_misc
         self.single_corpus = single_corpus
         self.run_casen = run_casen
@@ -275,7 +273,7 @@ class Casen:
                 entity_start = int(entity.get("entity_start"))
                 entity_end = int(entity.get("entity_end"))
                 
-                if self.light_mode:
+                if self.production_mode:
                     rows.append({
                     "NER" : ner,
                     "NER_label" : ner_label,
