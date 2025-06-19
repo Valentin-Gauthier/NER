@@ -96,7 +96,82 @@ CasEN_Stanza_priority
 This indicates that CasEN and Stanza agreed on both the entity and the label, and their interpretation takes precedence over spaCy’s.
 
 ---
+## 📊 Named Entity Recognition (NER) – Evaluation Results
 
+This section presents the evolution of NER performance across different configurations using **CasEN**, **SpaCy**, **Stanza**, and optimized graph sequences.
+
+
+
+### 🧪 Initial Evaluation (CasEN ∩ SpaCy)
+
+Entities detected using the intersection of CasEN and SpaCy systems at the beginning of the pipeline.
+```bash
+| Category | Total Entities | Accuracy |
+|----------|----------------|----------|
+| NE       | 4,085          | 97.67%   |
+| PER      | 2,744          | 98.69%   |
+| LOC      | 1,212          | 98.68%   |
+| ORG      | 129            | 66.67%   |
+| MISC     | 0              | 0.00%    |
+
+```
+
+### 📁 CasEN on Single Corpus File (CasEN ∩ SpaCy)
+
+Performance after switching to a **single concatenated file** approach for CasEN.
+```bash
+| Category | Total Entities | Accuracy | Entity Gain | Accuracy Loss |
+|----------|----------------|----------|--------------|----------------|
+| NE       | 5,327          | ✅ 97.61%   | 🔼 +30.40%     | 🔽 -0.06%         |
+| PER      | 4,236          | ✅ 98.31%   | 🔼 +51.37%     | 🔽 -0.37%         |
+| LOC      | 952            | ✅ 98.83%   | 🔽 -21.45%     | 🔼 +0.15%         |
+| ORG      | 139            | ⚠️ 66.92%   | 🔼 +7.75%      | 🔽 -0.26%         |
+| MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
+
+```
+
+### 🚀 CasEN + Optimized Graphs
+
+Results using **CasEN with graph optimization** strategies.
+```bash
+| Category | Total Entities | Accuracy | Entity Gain | Accuracy Loss |
+|----------|----------------|----------|--------------|----------------|
+| NE       | 6,010          | ✅ 97.14%   | 🔼 +12.82%     | 🔽 -0.47%         |
+| PER      | 4,491          | ✅ 98.00%   | 🔼 +6.02%      | 🔽 -0.31%         |
+| LOC      | 1,294          | ✅ 97.78%   | 🔼 +35.92%     | 🔼 +1.05%         |
+| ORG      | 225            | ⚠️ 75.12%   | 🔼 +61.87%     | 🔽 -8.20%         |
+| MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
+
+```
+
+### 🧠 Full System: CasEN + SpaCy + Stanza + Optimization & Priority Rules
+
+Final performance combining **all systems** with **graph priority strategies** and **CasEN optimizations**.
+```bash
+| Category | Total Entities | Accuracy | Entity Gain | Accuracy Loss |
+|----------|----------------|----------|--------------|----------------|
+| NE       | 7,086          | ✅ 97.08%   | 🔼 +17.90%     | 🔽 -0.06%         |
+| PER      | 5,592          | ✅ 97.37%   | 🔼 +24.52%     | 🔽 -0.63%         |
+| LOC      | 1,267          | ✅ 98.30%   | 🔽 -2.09%      | 🔼 +0.52%         |
+| ORG      | 227            | ⚠️ 82.84%   | 🔼 +0.89%      | 🔽 -7.72%         |
+| MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
+```
+
+
+#### ✅ Summary
+
+```bash
+| Category | Total Entities | Accuracy | Entity Gain | Accuracy Loss |
+|----------|----------------|----------|--------------|----------------|
+| NE       | 7,086          | ✅97.08%   | 🔼 +73.46%     | 🔽 -0.60%         |
+| PER      | 5,592          | ✅97.37%   | 🔼 +103.79%     | 🔽 -1.31%        |
+| LOC      | 1,267          | ✅98.30%   | 🔼 +4.54%      | 🔽 -0.38%         |
+| ORG      | 227            | ⚠️ 82.84%   | 🔼 +75.97%      | 🔼 +16.18%         |
+| MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
+```
+
+
+---
 ## 📅 Installation
 
 ### 1. Clone the repository
