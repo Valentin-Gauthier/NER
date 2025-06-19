@@ -81,7 +81,7 @@ When an entity is detected by **multiple systems with different labels**, we app
 
 #### 🧠 Example
 
-![Excel Result Preview](src\images\image.png)
+![Excel Result Preview](src/images/image.png)
 
 As shown above:
 
