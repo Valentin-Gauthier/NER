@@ -27,6 +27,7 @@ To preserve the traceability of each description's origin, we wrap them with cus
 </doc>
 ```
 
+
 This allows the system to:
 
 - ✅ Significantly reduce execution time (more than 2× faster in our tests)
