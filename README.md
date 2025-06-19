@@ -130,7 +130,7 @@ Performance after switching to a **single concatenated file** approach for CasEN
 
 
 
-### 🚀 CasEN + Optimized Graphs
+### 🚀 CasEN ∩ SpaCy + Optimized Graphs
 
 Results using **CasEN with graph optimization** strategies.
 
@@ -143,7 +143,7 @@ Results using **CasEN with graph optimization** strategies.
 | MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
 
 
-### 🧠 Full System: CasEN + SpaCy + Stanza + Optimization & Priority Rules
+### 🧠 Full System: CasEN + SpaCy + Stanza + Optimized Graphs & Priority Rules
 
 Final performance combining **all systems** with **graph priority strategies** and **CasEN optimizations**.
 
