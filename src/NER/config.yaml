@@ -11,7 +11,7 @@ ner_result_folder: ".\\Results" # The path for the Excel file generate at the en
 extention : "xlsx" #support xlsx & csv
 
 # Columns to keep in the last DataFrame (you have to keep file_id if you want to apply correction)
-columns: ["titles", "sub_title", "days", "channel", "category", "NER", "NER_label", "clean_titles", "method", "file_id"]
+columns: ["titles", "sub_title", "days", "channel", "category", "NER", "NER_label", "clean_titles", "method"]
 final_methods_to_keep: ["casENOpti", "casEN_spaCy_stanza", "casEN_stanza_priority", "casEN_stanza", "spaCy_stanza_priority"]
 
 

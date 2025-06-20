@@ -24,8 +24,10 @@ class StanzaConfig:
     
         self.load_config()
 
+        
         # Load the French Pipeline (tokenize : slice the text, mwt: usefull for french word like "ajourd'hui", ner : analyse the text)
-        self.nlp = stanza.Pipeline(lang="fr", processors='tokenize,mwt,ner', use_gpu=self.use_gpu)
+        # download_method=None : doesnt look for update stanza (because if we don't have connection it trying to update and cause an error)
+        self.nlp = stanza.Pipeline(lang="fr", processors='tokenize,mwt,ner', use_gpu=self.use_gpu, download_method=None)
 
 
     # ------------------- TOOLS --------------------------

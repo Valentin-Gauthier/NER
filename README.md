@@ -179,6 +179,8 @@ Final performance combining **all systems** with **graph priority strategies** a
 
 - ✅ It could also be very interesting to replace the single text file generated for CasEN with several ‘collection’ type files, grouping EPGs from the same collection together. We can probably imagine a more coherent result for the use of generic graphs in this case.
 
+- ✅ We could also analyse the file containing the descriptions a little more and devise a system for deleting descriptions that are the same, to reduce the workload afterwards. While keeping the information to be able to put the entities with the right descriptions in afterwards.
+
 - Adding exlude words to the dictionary for PERs.
 
 - The `priority` system could also be further improved and extended.  
