@@ -47,7 +47,7 @@ This allows the system to:
 
 We then evaluated the **precision** and **entity yield** of each graph individually.
 
-This analysis helped us identify certain graphs—or combinations of graphs—that provided the most benefit. We leveraged this insight to **prioritize and retain their extracted entities**, even if they were not detected by other systems.
+This analysis helped us identify certain graphs or combinations of graphs that provided the most benefit. We leveraged this insight to **prioritize and retain their extracted entities**, even if they were not detected by other systems.
 
 ### 🔍 Example of a Graph Sequence
 
@@ -205,5 +205,5 @@ pip install -r requirements.txt
 
 ## ✍️ Author
 
-Valentin — Bachelor’s degree, 3rd year, Computer Science
+Valentin — Bachelor’s degree, 3rd year, Computer Science<br>
 Internship at LIFAT - 2025
