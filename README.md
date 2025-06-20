@@ -80,6 +80,7 @@ When an entity is detected by **multiple systems with different labels**, we app
 
 ⚠️ **Important:** Currently, this system works only for **PER** entities.  
 After a brief analysis, this configuration appears to yield the highest number of entities with minimal loss in precision.
+We have also combined this with a dictionary of words that are often taken by these graphs but that we know are not good (a list that eliminates certain ambiguities with PERs).
 
 
 #### Example
@@ -178,6 +179,8 @@ Final performance combining **all systems** with **graph priority strategies** a
 
 - ✅ It could also be very interesting to replace the single text file generated for CasEN with several ‘collection’ type files, grouping EPGs from the same collection together. We can probably imagine a more coherent result for the use of generic graphs in this case.
 
+- Adding exlude words to the dictionary for PERs.
+
 - The `priority` system could also be further improved and extended.  
   Currently, it identifies all composite methods (e.g., `CasEN_Stanza`) and atomic methods (e.g., `CasEN`, `Stanza`) separately.  
   When both a composite and an atomic method detect the same entity but assign different categories, the system applies a priority rule in favor of the composite method.  
@@ -195,11 +198,17 @@ git clone https://github.com/Valentin-Gauthier/NER.git
 cd NER
 ```
 
+
+
 ### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
+
+### 3. Configure the project
+
+Before running the project, make sure to edit the `config.yaml` file to configure all settings according to your machine.
 
 ---
 
