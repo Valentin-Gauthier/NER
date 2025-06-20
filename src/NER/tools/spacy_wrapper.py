@@ -11,7 +11,7 @@ class SpaCyConfig:
     def __init__(self, 
                  model:str="fr_core_news_sm",
                  production_mode:bool = True,
-                 spacy_config:str=Path(__file__).parent / "config.yaml",
+                 spacy_config:str=Path(__file__).parent.parent / "config.yaml",
                  timer:bool=False, 
                  logging:bool=False, 
                  verbose:bool=False

@@ -14,7 +14,7 @@ class NerConfig:
                  keep_only_trustable_methods:bool=True,
                  save_to_file:bool=False,
                  production_mode:bool=True,
-                 ner_config:str=Path(__file__).parent / "config.yaml",
+                 ner_config:str=Path(__file__).parent.parent / "config.yaml",
                  logging:bool=False,
                  timer:bool=False,
                  verbose:bool=False
@@ -160,7 +160,7 @@ class NerConfig:
     def casEN_optimisation(self) -> pd.DataFrame:
         """ Change the method casEN to casEN_opti when the graphs in the JSON trustable graphs"""
 
-        valid_graphs = self.config["casEN_opti"]
+        valid_graphs = self.config["casENOpti_grf"]
         
         def is_allowed(row):
             for combo in valid_graphs:
@@ -170,7 +170,7 @@ class NerConfig:
 
         def upgrade_method(row):
             if row["method"] == "casEN" and is_allowed(row):
-                return "casEN_opti"
+                return "casENOpti"
             else:
                 return row["method"]
 
@@ -180,7 +180,7 @@ class NerConfig:
 
         if self.verbose:
             source_counts = self.df['method'].value_counts()
-            casen_opti_count = source_counts.get('casEN_opti', 0)
+            casen_opti_count = source_counts.get('casENOpti', 0)
             
             print(f"[casEN_optimisation] CasEN_opti only : {casen_opti_count} lignes")
 
@@ -193,7 +193,7 @@ class NerConfig:
 
         all_methods = self.df["method"].unique()
 
-        composite_methods = [m for m in all_methods if "_" in m and m != "casEN_opti"]
+        composite_methods = [m for m in all_methods if "_" in m and m]
         atomic_methods = [m for m in all_methods if "_" not in m]
 
         if self.verbose:
@@ -390,12 +390,13 @@ class NerConfig:
         # ------------- CONSENSUS -------------- #
         # merge every dataframes
         self.merge()
-        # optimisations
-        if self.process_casen_opti:
-            self.casEN_optimisation()
 
         if self.process_priority_merge:
             self.priority_merge()
+
+        # optimisations
+        if self.process_casen_opti:
+            self.casEN_optimisation()
 
         # Cleaning DataFrames
         self.clean()

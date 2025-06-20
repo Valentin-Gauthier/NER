@@ -18,7 +18,7 @@ class CasenConfig:
                  logging:bool=False,
                  timer:bool=False,
                  archiving_result:bool=False,
-                 casen_config:str= Path(__file__).parent / "config.yaml", 
+                 casen_config:str= Path(__file__).parent.parent / "config.yaml", 
                  verbose:bool=False
                  ):
         self.casen_config = Path(casen_config)

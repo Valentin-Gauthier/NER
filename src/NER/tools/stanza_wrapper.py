@@ -10,7 +10,7 @@ class StanzaConfig:
     def __init__(self, 
                  use_gpu:bool=True, 
                  production_mode:bool=True,
-                 stanza_config:str=Path(__file__).parent / "config.yaml",
+                 stanza_config:str=Path(__file__).parent.parent / "config.yaml",
                  timer:bool=False, 
                  logging:bool=False, 
                  verbose:bool=False

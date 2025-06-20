@@ -43,7 +43,7 @@ This allows the system to:
 
 ---
 
-## 🚀 CasEN Optimization
+## 🚀 CasEN Optimization (method : casENOpti)
 
 We then evaluated the **precision** and **entity yield** of each graph individually.
 
@@ -66,19 +66,23 @@ These optimized sequences allow us to improve both recall and consistency across
 Each text description is first processed individually by all three systems (**CasEN**, **spaCy**, and **Stanza**).
 Then, we apply a **cross-validation strategy** during result fusion:
 
-### 🧹 Cross-System Agreement
+### Cross-System Agreement
 
 * If multiple systems detect the **same entity**, we merge their outputs and label them accordingly.
 * Example: If both **CasEN** and **Stanza** detect "Nora" as a `PER`, the merged method becomes `CasEN_Stanza`.
 
-### ⚖️ Conflict Resolution with Priority Rules
+###  Conflict Resolution with Priority Rules
 
 When an entity is detected by **multiple systems with different labels**, we apply **priority rules**:
 
 * Entities found by **more systems** are considered more reliable.
 * If systems agree on the **entity** but not on the **label**, we prioritize the **most frequent or reliable label** among agreeing systems.
 
-#### 🧠 Example
+⚠️ **Important:** Currently, this system works only for **PER** entities.  
+After a brief analysis, this configuration appears to yield the highest number of entities with minimal loss in precision.
+
+
+#### Example
 
 ![Excel Result Preview](src/images/image.png)
 
@@ -87,11 +91,8 @@ As shown above:
 * Both **CasEN** and **Stanza** classify **“Nora”** as a **Person (`PER`)**.
 * **spaCy**, however, classifies it as a **Location (`LOC`)**.
 
-📌 As a result, the merged label becomes:
+As a result, the merged label becomes: CasEN_Stanza_priority
 
-```txt
-CasEN_Stanza_priority
-```
 
 This indicates that CasEN and Stanza agreed on both the entity and the label, and their interpretation takes precedence over spaCy’s.
 
@@ -102,7 +103,7 @@ This section presents the evolution of NER performance across different configur
 
 
 
-### 🧪 Initial Evaluation (CasEN ∩ SpaCy)
+###  Initial Evaluation (CasEN ∩ SpaCy)
 
 Entities detected using the intersection of CasEN and SpaCy systems at the beginning of the pipeline.
 
@@ -130,7 +131,7 @@ Performance after switching to a **single concatenated file** approach for CasEN
 
 
 
-### 🚀 CasEN ∩ SpaCy + Optimized Graphs
+### 🚀 CasEN + Optimized Graphs
 
 Results using **CasEN with graph optimization** strategies.
 
@@ -143,7 +144,7 @@ Results using **CasEN with graph optimization** strategies.
 | MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
 
 
-### 🧠 Full System: CasEN + SpaCy + Stanza + Optimized Graphs & Priority Rules
+### Full System: CasEN + SpaCy + Stanza + Optimization & Priority Rules
 
 Final performance combining **all systems** with **graph priority strategies** and **CasEN optimizations**.
 
@@ -168,9 +169,23 @@ Final performance combining **all systems** with **graph priority strategies** a
 | ORG      | 227            | ⚠️ 82.84%   | 🔼 +75.97%      | 🔼 +16.18%         |
 | MISC     | 0              | ❌ 0.00%    | ➖ 0.00%       | ➖ 0.00%          |
 
-
-
 ---
+## 🔄 Suggestions for Further Work / Improvements
+
+- ✅ After two months, several updates have been made to CasEN. It would be beneficial to reanalyze the graphs (as some have changed!) in order to update the `CasENOpti` configuration.
+
+- ✅ Additionally, further analysis could be performed by modifying the order in which the graphs are applied particularly for the `Generique`     graphs.
+
+- ✅ It could also be very interesting to replace the single text file generated for CasEN with several ‘collection’ type files, grouping EPGs from the same collection together. We can probably imagine a more coherent result for the use of generic graphs in this case.
+
+- The `priority` system could also be further improved and extended.  
+  Currently, it identifies all composite methods (e.g., `CasEN_Stanza`) and atomic methods (e.g., `CasEN`, `Stanza`) separately.  
+  When both a composite and an atomic method detect the same entity but assign different categories, the system applies a priority rule in favor of the composite method.  
+  (It might also be worth exploring comparisons between atomic methods themselves to refine the decision-making process.)
+
+⚠️ **Important:** All tests and analyses were carried out on a single day's data set. It is possible that by working on much larger data sets, certain functions may no longer work or certain optimisations may no longer be consistent.
+
+
 ## 📅 Installation
 
 ### 1. Clone the repository
@@ -191,4 +206,4 @@ pip install -r requirements.txt
 ## ✍️ Author
 
 Valentin — Bachelor’s degree, 3rd year, Computer Science
-Internship at LIFAT - 2025.
+Internship at LIFAT - 2025
