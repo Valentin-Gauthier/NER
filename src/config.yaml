@@ -1,0 +1,446 @@
+
+#########################################################################################################################
+#                                                                                                                       #
+#                                                    CONFIG - NER                                                       #
+#                                                                                                                       # 
+#########################################################################################################################
+
+
+log_folder : ".\\Logs" # The path for the folder witch contains log.txt file
+ner_result_folder: ".\\Results" # The path for the Excel file generate at the end (if make_excel is True)
+extention : "xlsx" #support xlsx & csv
+
+# Columns to keep in the last DataFrame (you have to keep file_id if you want to apply correction)
+columns: ["titles", "sub_title", "days", "channel", "category", "NER", "NER_label", "clean_titles", "method"]
+final_methods_to_keep: ["casENOpti", "casEN_spaCy_stanza", "casEN_stanza_priority", "casEN_stanza", "spaCy_stanza_priority"]
+
+
+# ========================== SETTINGS ===========================
+
+# Size of the window (number of characters) for extracting descriptions
+description_window: 30
+
+
+
+
+
+
+#########################################################################################################################
+#                                                                                                                       #
+#                                                    CONFIG - CasEN                                                     #
+#                                                                                                                       # 
+#########################################################################################################################
+# ============================ PATHS ============================
+
+# Path to the Jupyter Notebook used to run CasEN
+ipynb_file: "D:\\travail\\CasEN\\CasEN_fr.2.0\\CasEN.ipynb"
+
+# Folder containing input files to be analyzed by CasEN
+corpus_folder: "D:\\travail\\Stage\\NER\\NER\\src\\Results\\Corpus"
+
+# Output folder where CasEN results will be saved
+result_folder: "D:\\travail\\Stage\\NER\\NER\\src\\Results\\CasEN\\Res_CasEN"
+
+# Folder for archiving files
+archive_folder: "D:\\travail\\Stage\\NER\\NER\\src\\NER\\Archives"
+
+# ============================ LABELS ===========================
+
+# Tag names used to identify entity types
+labels:
+  # Person entities
+  PER:  ["persName", "surname", "forename", "addName", "nationality", "demonym", "genName", "name"]    
+  # Location entities
+  LOC:  ["placeName", "geogName", "adress", "adrLine", "place"]  
+  # Organization entities
+  ORG:  ["orgName", "geogFeat", "event", "vieuxSigle"]
+
+  # DATE: ["date", "time", "datePeriod", "timePeriod", "gYear"]  
+
+  # JOB : ["roleName"]  
+
+  # UNITE : ["measure", "extent"] 
+
+  # TYPE: ["productName"]   
+  
+  #MISC : []  nothing because there is no tag for ambiguous entity
+
+  # Catégorie missing for tags : nameLink, ref
+
+
+# Name of the graphs for each labels
+labels_grf:
+  PER : ["grfpersGenerique", "grfpersPrenomNom", ]
+  LOC : ["grfplaceBatiment", "grfgeog", "grfplaceQuartier"]
+  ORG : ["grforgProximite", "grforgPolice", "grforgSeule"]
+  MISC : ["grfpersAmbigus"]
+
+
+# ========================== EXCLUDED NAMES ===========================
+# List of words that pass perfectly in the prfpersGenerique but which we know cannot be people (or too rarely)
+excluded_names_list : [ 
+                      "France",
+                      "Paris",
+                      "Espagne",
+                      "Allemand",
+                      "Mexique",
+                      "Prix",
+                      "Nord",
+                      "NASA",
+                      "Real Madrid",
+                      "SUPER",
+                      ]
+
+# ========================== GRAPHS (casEN_opti) ===========================
+# These are CasEN graphs which after analysis enable us to recover as much data as possible without losing too much precision. 
+# if only CasEN found entity with thoses graphs, the method is gonna change for casEN_opti
+
+casENOpti_grf:
+  - grf_1: "grfpersContextePersonne"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grfpersAmbigus"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grfgeog"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grftoolPolylexical"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grfpersCivilitePersonne"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grforgPlaceGeoPolitique"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grforgAssemblee"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grftagOrgNameEntreprise"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grfgeogRiviere"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grforgSuiviDeParentheses"
+    grf_2: ""
+    grf_3: ""
+
+  - grf_1: "grfgeogPlaceDico"
+    grf_2: "grftoolPolylexical"
+    grf_3: ""
+
+  - grf_1: "grfgeogPlaceDico"
+    grf_2: "grforgPlaceGeoPolitique"
+    grf_3: ""
+
+  - grf_1: "grforgGenerique"
+    grf_2: "grfgeogHydro"
+    grf_3: ""
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgPolice"
+    grf_3: ""
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgTransport"
+    grf_3: ""
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgArmee"
+    grf_3: ""
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgGouvernement"
+    grf_3: ""
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgSport"
+    grf_3: ""
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgAssemblee"
+    grf_3: ""
+
+  - grf_1: "grfpersCivilitePersonne"
+    grf_2: "grftagNomFamille"
+    grf_3: ""
+
+  - grf_1: "grfpersCivilitePersonne"
+    grf_2: "grftagCiviliteS"
+    grf_3: ""
+
+  - grf_1: "grfpersCivilitePersonne"
+    grf_2: "grftagTitreNobiliaireS"
+    grf_3: ""
+
+  - grf_1: "grfpersContextePersonne"
+    grf_2: "grftagNomFamille"
+    grf_3: ""
+
+  - grf_1: "grfpersPrenomNom"
+    grf_2: "grftagCiviliteS"
+    grf_3: ""
+
+  - grf_1: "grfplace"
+    grf_2: "grforgPolice"
+    grf_3: ""
+
+  - grf_1: "grfplace"
+    grf_2: "grfpersPrenomNom"
+    grf_3: ""
+
+  - grf_1: "grfplace"
+    grf_2: "grforgProximite"
+    grf_3: ""
+
+  - grf_1: "grfplace"
+    grf_2: "grforgEconomie"
+    grf_3: ""
+
+  - grf_1: "grfplace"
+    grf_2: "grfpersContextePersonne"
+    grf_3: ""
+
+  - grf_1: "grftagOrgFunder"
+    grf_2: "grforgProximite"
+    grf_3: ""
+
+  - grf_1: "grftagOrgNameEntreprise"
+    grf_2: "grfpersPrenomNom"
+    grf_3: ""
+
+  - grf_1: "grftagOrgNameEntreprise"
+    grf_2: "grfpersGenerique"
+    grf_3: ""
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgArmee"
+    grf_3: "grfpersPrenomNom"
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgProximite"
+    grf_3: "grfpersPrenomNom"
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgMusique"
+    grf_3: "grfpersPrenomNom"
+
+  - grf_1: "grforgSeule"
+    grf_2: "grforgAssemblee"
+    grf_3: "grfpersGenerique"
+
+  - grf_1: "grfpersCivilitePersonne"
+    grf_2: "grftagCiviliteS"
+    grf_3: "grftagNomFamille"
+
+  - grf_1: "grfpersCivilitePersonne"
+    grf_2: "grftagTitreNobiliaireS"
+    grf_3: "grftagNomFamilleDe"
+
+  - grf_1: "grfpersPrenomNom"
+    grf_2: "grftagPrenom"
+    grf_3: "grftagNumRegne"
+
+  - grf_1: "grfpersPrenomNom"
+    grf_2: "grftagPrenom"
+    grf_3: "grftagTitreNobiliaireS"
+
+  - grf_1: "grfpersPrenomNom"
+    grf_2: "grftagCiviliteS"
+    grf_3: "grftagParticule"
+
+  - grf_1: "grfplace"
+    grf_2: "grfpersContextePersonne"
+    grf_3: "grfpersContextePersonne"
+    
+
+
+casEN_opti2:
+  - grf_1: "grfpersGenerique"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgProximite"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grfpersAmbigus"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgPolice"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grfplaceBatiment"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grfplaceQuartier"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgAdministrative"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grftoolPolylexicalOrgPlace"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgSport"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgEntreprise"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grfplaceRoutes"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgTransport"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgArmee"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grfGeogPlaceGenerique"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgPlaceGeoPolitique"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgMusique"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgJustice"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgFinance"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grfplace2org"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgAssemblee"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grftagOrgNameEntreprise"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grfgeogRiviere"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grforgSuiviDeParentheses"
+    grf_2: ""
+    grf_3: ""
+  - grf_1: "grfadress"
+    grf_2: "grftagZoneIndustrielle"
+    grf_3: ""
+  - grf_1: "grfgeog"
+    grf_2: "grftoolPolylexicalOrgPlace"
+    grf_3: ""
+  - grf_1: "grfgeog"
+    grf_2: "grforgPlaceGeoPolitique"
+    grf_3: ""
+  - grf_1: "grfGeogPlaceGenerique"
+    grf_2: "grfgeogRiviere"
+    grf_3: ""
+  - grf_1: "grfGeogPlaceGenerique"
+    grf_2: "grfgeogMer"
+    grf_3: ""
+  - grf_1: "grfGeogPlaceGenerique"
+    grf_2: "grfgeogPhysique"
+    grf_3: ""
+  - grf_1: "grfGeogPlaceGenerique"
+    grf_2: "grfgeogHydro"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grfpersGenerique"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grftagNomFamille"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grfpersPrenomNom"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grforgTransport"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grforgGouvernement"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grforgSport"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grforgAssemblee"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grfPartiPolitique"
+    grf_3: ""
+  - grf_1: "grforgSeule"
+    grf_2: "grftagGentileP"
+    grf_3: ""
+  - grf_1: "grfpersCivilitePersonne"
+    grf_2: "grftagNomFamille"
+    grf_3: ""
+  - grf_1: "grfpersCivilitePersonne"
+    grf_2: "grftagNomFamilleDe"
+    grf_3: ""
+  - grf_1: "grfpersPrenomNom"
+    grf_2: "grftagPrenom"
+    grf_3: "grftagPrenom"
+  - grf_1: "grfplace"
+    grf_2: "grfplaceRoutes"
+    grf_3: ""
+  - grf_1: "grfplace2org"
+    grf_2: "grfgeog"
+    grf_3: ""
+  - grf_1: "grfplaceRoutes"
+    grf_2: "grfgeog"
+    grf_3: ""
+  - grf_1: "grftagOrgFunder"
+    grf_2: "grforgProximite"
+    grf_3: ""
+  - grf_1: "grftagOrgNameEntreprise"
+    grf_2: "grfpersPrenomNom"
+    grf_3: ""
+  - grf_1: "grftagOrgNameEntreprise"
+    grf_2: "grfpersGenerique"
+    grf_3: ""
+  - grf_1: "grfadress"
+    grf_2: "grftagZoneIndustrielle"
+    grf_3: "grftagZoneIndustrielle"
+  - grf_1: "grforgSeule"
+    grf_2: "grforgArmee"
+    grf_3: "grfpersPrenomNom"
+  - grf_1: "grforgSeule"
+    grf_2: "grforgAssemblee"
+    grf_3: "grfpersGenerique"
+  - grf_1: "grforgSeule"
+    grf_2: "grftagGentileP"
+    grf_3: "grftagNomFamille"
+  - grf_1: "grforgSeule"
+    grf_2: "grforgMusique"
+    grf_3: "grfpersGenerique"
+  - grf_1: "grforgSeule"
+    grf_2: "grforgMusique"
+    grf_3: "grfpersPrenomNom"
+  - grf_1: "grfplace"
+    grf_2: "grfplaceBatiment"
+    grf_3: "grforgPolice"
+  - grf_1: "grfplace"
+    grf_2: "grfplaceBatiment"
+    grf_3: "grforgProximite"
+  - grf_1: "grfplace"
+    grf_2: "grfplaceQuartier"
+    grf_3: "grfpersGenerique"
+  - grf_1: "grfplace"
+    grf_2: "grfplaceBatiment"
+    grf_3: "grforgEconomie"
+  - grf_1: "grfplace"
+    grf_2: "grfplaceBatiment"
+    grf_3: "grfroleName"
