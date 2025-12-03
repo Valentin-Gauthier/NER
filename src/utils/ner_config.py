@@ -7,12 +7,14 @@ class NerConfig:
 
     def __init__(self, 
                  process_priority_merge: bool = True,
+                 labels_priority:list[str] = ["PER", "LOC", "ORG", "MISC"],
                  process_casen_opti: bool = True,
                  remove_duplicated_entity_per_desc: bool = True,
                  ner_config: str = Path(__file__).parent.parent / "config.yaml",
                  verbose: bool = False
                  ):
         self.process_priority_merge = process_priority_merge
+        self.labels_priority = labels_priority
         self.process_casen_opti = process_casen_opti
         self.remove_duplicated_entity_per_desc = remove_duplicated_entity_per_desc
         self.ner_config = Path(ner_config)
@@ -180,13 +182,13 @@ class NerConfig:
 
         
         # 3. Application de la modification sur casEN et casEN_stanza etc
-        has_casen = df["method"].str.contains("casEN", na=False, regex=False)
-        condition = has_casen & valid_graph_mask
-        df.loc[condition, "method"] = df.loc[condition, "method"].str.replace("casEN", "casENOpti", regex=False)
+        # has_casen = df["method"].str.contains("casEN", na=False, regex=False)
+        # condition = has_casen & valid_graph_mask
+        # df.loc[condition, "method"] = df.loc[condition, "method"].str.replace("casEN", "casENOpti", regex=False)
 
-        # # 3. Application de la modification (uniquement sur CasEN)
-        # condition = (df["method"] == "casEN") & valid_graph_mask
-        # df.loc[condition, "method"] = "casENOpti"
+        # 3. Application de la modification (uniquement sur CasEN)
+        condition = (df["method"] == "casEN") & valid_graph_mask
+        df.loc[condition, "method"] = "casENOpti"
 
         if verbose: 
             nb_opti = condition.sum()
@@ -194,7 +196,117 @@ class NerConfig:
 
         return df
 
-    def run(self, data:pd.DataFrame, dfs:list[pd.DataFrame]):
+
+    @staticmethod
+    def apply_correction(df: pd.DataFrame, correction: str, verbose: bool = False) -> pd.DataFrame:
+        """
+        Applique les corrections d'un Excel en gérant le fait que df['files_id'] est un tuple 
+        et correction['files_id'] est un entier unique.
+        """
+        
+        # 1. Chargement et Nettoyage de la correction
+        correction_columns = ["manual cat", "correct", "extent", "NER_category"]
+        
+        try:
+            corr_df = pd.read_excel(correction)
+        except Exception as e:
+            print(f"[apply_correction] Erreur lecture fichier: {e}")
+            return df
+
+        # On s'assure que les colonnes clés existent
+        if not {"NE", "label", "files_id"}.issubset(corr_df.columns):
+            print(f"[apply_correction] Colonnes manquantes dans le fichier Excel.")
+            return df
+
+        # Nettoyage des doublons dans la correction
+        corr_df = corr_df.drop_duplicates(subset=["NE", "label", "files_id"])
+        
+        # On ne garde que les colonnes utiles (Clés + Colonnes à importer)
+        cols_to_import = [c for c in correction_columns if c in corr_df.columns]
+        corr_df = corr_df[["NE", "label", "files_id"] + cols_to_import]
+
+        # S'assurer que files_id est du même type (int) pour le merge
+        # On drop les NaNs dans l'ID de correction car inexploitable
+        corr_df = corr_df.dropna(subset=["files_id"])
+        corr_df["files_id"] = corr_df["files_id"].astype(int)
+
+        if verbose:
+            print(f"[apply_correction] {len(corr_df)} corrections chargées.")
+
+        # 2. Préparation du DataFrame principal (Explode Strategy)
+        # On travaille sur une copie pour ne pas casser l'index ou l'ordre
+        df_w_index = df.copy()
+        
+        # On sauvegarde l'index original pour pouvoir reconstruire le dataframe après l'explode
+        df_w_index.index.name = "original_index"
+        df_w_index = df_w_index.reset_index()
+
+        # --- Etape Clé : EXPLODE ---
+        # Transforme les tuples (1,2,12) en lignes distinctes:
+        # Ligne A: id=1
+        # Ligne A: id=2
+        # Ligne A: id=12
+        exploded_df = df_w_index.explode("files_id")
+
+        # Conversion files_id en int (car explode peut laisser des objets si mélange)
+        # Gestion des cas où files_id serait vide ou NaN
+        exploded_df = exploded_df.dropna(subset=["files_id"])
+        exploded_df["files_id"] = exploded_df["files_id"].astype(int)
+
+        # 3. Jointure (Merge)
+        # On merge sur les ID éclatés
+        merged_df = pd.merge(
+            exploded_df, 
+            corr_df, 
+            on=["NE", "label", "files_id"], 
+            how="left", 
+            suffixes=("", "_corr")
+        )
+
+        # 4. Réagrégation (Collapse)
+        # Maintenant on a potentiellement plusieurs lignes pour le même index original.
+        # On veut récupérer les corrections s'il y en a une.
+        # 'first' suffit car on suppose qu'une entité n'a pas deux corrections contradictoires pour ses différents IDs
+        # Si vous voulez prioriser, il faut trier avant.
+        
+        # On groupe par l'index original et on prend la première valeur non-nulle trouvée pour les colonnes de correction
+        corrections_found = merged_df.groupby("original_index")[cols_to_import].first()
+
+        # 5. Injection des données dans le DF original
+        # On joint les corrections récupérées sur l'index du df original
+        df_final = df.join(corrections_found, rsuffix='_new')
+
+        # Mise à jour des colonnes : si la colonne existe déjà, on la met à jour, sinon on la crée
+        for col in cols_to_import:
+            if col in df_final.columns and f"{col}_new" in df_final.columns:
+                # combine_first : priorise la valeur existante non-null, 
+                # MAIS ici on veut appliquer la correction, donc on priorise la correction (_new)
+                # update: df_final[col] prend la valeur de _new si _new n'est pas Na
+                df_final[col] = df_final[f"{col}_new"].combine_first(df_final[col])
+                df_final = df_final.drop(columns=[f"{col}_new"])
+            elif f"{col}_new" in df_final.columns:
+                # La colonne n'existait pas, on la renomme simplement
+                df_final = df_final.rename(columns={f"{col}_new": col})
+
+        # Réorganisation des colonnes
+        final_cols_order = []
+        # D'abord les colonnes de correction
+        for c in correction_columns:
+            if c in df_final.columns:
+                final_cols_order.append(c)
+        # Ensuite le reste
+        for c in df_final.columns:
+            if c not in final_cols_order:
+                final_cols_order.append(c)
+        
+        df_final = df_final[final_cols_order]
+
+        if verbose:
+            print(f"[apply_correction] Shape final: {df_final.shape}")
+        
+        return df_final
+
+    def run(self, data:pd.DataFrame, dfs:list[pd.DataFrame], correction:str=None):
 
         if dfs is None or not all(isinstance(df, pd.DataFrame) for df in dfs):
             raise ValueError("[run] 'dfs' must be a list of pandas DataFrames.")
@@ -206,15 +318,22 @@ class NerConfig:
 
         # 2- Priority
         if self.process_priority_merge:
-            df = self.priority_merge(df) # labels=["PER"]
+            df = self.priority_merge(df, labels=self.labels_priority) # labels=["PER"]
 
         # 3- CasEN Graphs
         if self.process_casen_opti:
             graphs = self.config["casEN_opti2"]
             df = self.keep_precise_graphs(df, graphs, self.verbose)
 
+
         # Order the DataFrames
         df = self.order(df)
+
+        # correction
+        if correction is not None:
+            df = self.apply_correction(df, correction, self.verbose)
+
+        
 
         return df
         
