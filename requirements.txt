@@ -1,0 +1,8 @@
+beautifulsoup4==4.14.2
+lxml==6.0.0
+pandas==2.3.3
+PyYAML==6.0.3
+spacy==3.8.7
+stanza==1.10.1
+tqdm==4.67.1
+openpyxl
